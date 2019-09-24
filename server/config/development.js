@@ -1,3 +1,7 @@
 module.exports = {
-    logging: true
+    logging: true,
+    seed: true,
+    db: {
+        url: 'mongodb://localhost/chukachat'
+    }
 }
