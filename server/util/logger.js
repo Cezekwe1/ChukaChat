@@ -1,10 +1,12 @@
 var config = require('../config/config')
 var _ = require('lodash')
+require('colors')
 var noop = function(){}
 var consoleLog = config.logging ? console.log.bind(console) : noop
 
 var logger = {
     log: function(){
+        
         var args = _.toArray(arguments)
             .map(function(arg){
                 if (typeof arg === 'object'){
@@ -15,9 +17,8 @@ var logger = {
                     return arg.magenta
                 }
             });
-
+        
         consoleLog.apply(console,args)
     }
 }
-
 module.exports = logger
