@@ -4,7 +4,7 @@ var config = require('./server/config/config')
 var logger = require('./server/util/logger')
 var mongoose = require('mongoose')
 
-mongoose.connect(config.db.url, { useNewUrlParser: true, useUnifiedTopology: true})
+mongoose.connect(config.db.url, {useNewUrlParser: true, useUnifiedTopology: true})
 if (config.seed){
     require('./server/util/seed')
 }
