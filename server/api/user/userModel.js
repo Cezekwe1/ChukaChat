@@ -5,12 +5,12 @@ var bcrypt = require('bcrypt')
 const UserSchema = Schema({
   username: {
     type: String,
-    unique: True,
-    required: True
+    unique: true,
+    required: true
   },
   password: {
     type: String,
-    required: True
+    required: true
   },
   displayName: String,
   friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "user" }],
@@ -45,4 +45,4 @@ UserSchema.methods = {
 
 
 module.exports = mongoose.model('user', UserSchema);
-module.exports = mongoose.Model("user", UserSchema);
+

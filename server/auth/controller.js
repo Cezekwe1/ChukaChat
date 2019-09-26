@@ -1,8 +1,5 @@
 var User = require('../api/user/userModel')
-
-exports.signup = function(req,res,next){
-  User.create(req.body)
-}
+var signToken = require('./auth').signToken
 
 exports.signin = function(req,res,next){
   var token = signToken(req.user._id)

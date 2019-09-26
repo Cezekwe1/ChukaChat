@@ -1,5 +1,6 @@
 var User = require('./userModel')
 var _ = require('lodash')
+var signToken = require('../../auth/auth').signToken
 
 exports.param = function(req,res,next,id){
     User.findById(id)
@@ -15,6 +16,17 @@ exports.param = function(req,res,next,id){
     }, function(err) {
       next(err);
     });
+}
+
+exports.get = function(req,res,next){
+    User.find({})
+        .select('-password')
+        .then(function(doc){
+            res.json(doc)
+        })
+        .catch(function(err){
+            next(err)
+        })
 }
 
 exports.getOne = function(req, res, next) {
@@ -43,7 +55,6 @@ exports.post = function(req, res, next) {
   
     newUser.save(function(err, user) {
       if(err) { return next(err);}
-  
       const token = signToken(user._id);
       const username = user.username;
       res.json({token: token, user: user.toJson()});
