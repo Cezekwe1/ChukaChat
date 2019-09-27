@@ -3,9 +3,8 @@ var _ = require('lodash')
 
 exports.param = function(req,res,next,id){
     Conversation.findById(id)
-        .populate('messages')
-        .populate('starter')
-        .populate('target')
+        .populate('starter', '_id username conversations')
+        .populate('target', '_id username conversations')
         .exec()
         .then(function(conversation){
             if(!conversation){
@@ -29,6 +28,7 @@ exports.post = function(req,res,next){
 
 exports.getOne = function(req,res){
     var conversation = req.conversation
+    console.log(conversation)
     res.json(conversation)
 }
 
