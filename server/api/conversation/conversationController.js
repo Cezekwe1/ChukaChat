@@ -23,6 +23,7 @@ exports.post = function(req,res,next){
     var convo = new Conversation(req.body)
     convo.save(function(err,doc){
         if (err){next(err)}
+        res.json(doc)
     })
 }
 

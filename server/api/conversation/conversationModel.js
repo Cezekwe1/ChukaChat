@@ -16,7 +16,6 @@ const ConversationSchema = Schema({
         required: true
     },
 
-    messages = [{type: Schema.Types.ObjectId, ref: 'message'}]
     
 })
 
