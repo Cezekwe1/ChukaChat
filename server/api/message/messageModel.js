@@ -2,20 +2,26 @@ var mongoose = require('mongoose')
 var Schema = mongoose.Schema
 
 const MessageSchema = Schema({
-    sender = {
+    sender : {
         type: Schema.Types.ObjectId,
         ref: 'user',
         required: true
     },
-    receiver = {
+    receiver : {
         type: Schema.Types.ObjectId,
         ref: 'user',
         required: true
     },
-    text = {
+    text : {
         type: String,
+        required: true
+    },
+
+    conversation:{
+        type: Schema.Types.ObjectId,
+        ref: 'conversation',
         required: true
     }
 })
 
-module.exports = mongoose.Model('message', MessageSchema)
+module.exports = mongoose.model('message', MessageSchema)
