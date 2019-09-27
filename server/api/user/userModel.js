@@ -14,7 +14,7 @@ const UserSchema = Schema({
   },
   displayName: String,
   friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "user" }],
-  conversations: [{ type: mongoose.Schema.Types.ObjectId, ref: "conversation" }]
+  conversations: [{ type: mongoose.Schema.Types.ObjectId, ref: "conversation"}]
 });
 
 

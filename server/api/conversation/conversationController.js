@@ -3,6 +3,10 @@ var _ = require('lodash')
 
 exports.param = function(req,res,next,id){
     Conversation.findById(id)
+        .populate('messages')
+        .populate('starter')
+        .populate('target')
+        .exec()
         .then(function(conversation){
             if(!conversation){
                 next(new Error('No conversation like this'))
@@ -15,8 +19,15 @@ exports.param = function(req,res,next,id){
         })
 }
 
+exports.post = function(req,res,next){
+    var convo = new Conversation(req.body)
+    convo.save(function(err,doc){
+        if (err){next(err)}
+    })
+}
+
 exports.getOne = function(req,res){
-    var conversation = req.conversation.populate().exec()
+    var conversation = req.conversation
     res.json(conversation)
 }
 

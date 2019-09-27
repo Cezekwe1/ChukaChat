@@ -19,28 +19,55 @@ const InviteSchema = Schema({
     }
 })
 
+InviteSchema.pre('save',function(next){
+    if (JSON.stringify(this.inviter._id) === JSON.stringify(this.target._id)){
+        next(new Error("you cant invite yourself"))
+    }
+   next()
+})
+
 InviteSchema.post('save', function(doc){
     
     if (this.accepted){
         doc.populate('inviter').populate('target').execPopulate(function(err,invite){
             if (invite.inviter){
-                invite.inviter.friends.push(invite.target._id)
-                invite.inviter.save()
+                // invite.inviter.updateOne({_id: invite.inviter._id},{$addToSet:{friends: invite.target._id}})
+                //     .then(function(doc){
+                        
+                //     })
+                invite.inviter.friends.addToSet(invite.target._id)
+                invite.inviter.save(function(err,dix){
+                    if (err){console.log(err)}
+                    console.log(dix)
+                })
+
             }
             
             if(invite.target){
-                invite.target.friends.push(invite.inviter._id)
-                invite.target.save()
-            }
+                // invite.target.updateOne({_id: invite.target._id},{$addToSet:{friends: invite.inviter._id}})
+                //     .then(function(){
 
-            console.log("we are done blood")
+                //     })
+                invite.target.friends.addToSet(invite.inviter._id)
+                invite.target.save(function(err,dix){
+                    if (err){console.log(err)}
+                    console.log(dix)
+                })
+                    
+
+                
+                
+
+            }
             invite.remove()
         })
         
         
     }else if (this.accepted == false){
         this.remove()
+        
     }
+    
 })
 
 module.exports = mongoose.model('invite', InviteSchema)
