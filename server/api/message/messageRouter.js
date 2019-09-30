@@ -1,8 +1,11 @@
 var router = require('express').Router()
 var messageConvoRouter = require('./messageConvoRouter')
 var controller = require('./messageController')
+var auth = require('../../auth/auth')
+var validateUsers = [auth.decodeToken(), auth.getFreshUser()]
 
-router.use('/convo/',messageConvoRouter)
+router.use(validateUsers)
+router.use('/convo/', messageConvoRouter)
 router.param('id',controller.param)
 
 router.route('/')

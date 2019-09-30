@@ -5,6 +5,7 @@ var inviteRouter = require('./invite/inviteRouter')
 var conversationRouter = require('./conversation/conversationRouter')
 var messageRouter = require('./message/messageRouter')
 
+
 router.use('/users/',userRouter)
 router.use('/friends/',friendRouter)
 router.use('/messages/',messageRouter)

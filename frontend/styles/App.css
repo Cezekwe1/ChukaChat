@@ -1,0 +1,120 @@
+.App {
+  text-align: center;
+}
+
+.App-main-div {
+  height: 100%;
+}
+
+.normal {
+  background-color: #c2dde6 !important;
+}
+
+.done {
+  background-color: lightgreen !important;
+}
+
+.App-logo {
+  animation: App-logo-spin infinite 20s linear;
+  height: 40vmin;
+  pointer-events: none;
+}
+
+#root {
+  height: 100%;
+}
+
+html {
+  height: 100%;
+  min-width: 975px;
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+.react-modal {
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 708;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+.inner-modal {
+  position: fixed;
+  margin: auto;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  width: 700px;
+  height: 600px;
+  z-index: 709;
+  background-color: white;
+  border-radius: 4px;
+  overflow: auto;
+  padding: 20px;
+}
+.close {
+  position: fixed;
+  top: 10px;
+  right: 30px;
+  font-size: 58px !important;
+  font-weight: bold !important ;
+  color: white !important;
+}
+.close:hover,
+.close:focus {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.list-pop {
+  position: absolute !important;
+  margin-top: 70px !important;
+  z-index: 700 !important;
+  width: 10%;
+}
+
+.pop {
+  z-index: 700;
+}
+.pop:hover {
+  cursor: pointer;
+}
+
+.home-screen {
+  height: 100%;
+  background: url(../images/new_cover.png) no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+}
+.random-class{
+  float: right;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
