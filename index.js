@@ -8,7 +8,7 @@ var io = require('socket.io').listen(server)
 var connections = []
 var users = []
 
-mongoose.connect(config.db.url, {useNewUrlParser: true, useUnifiedTopology: true})
+mongoose.connect(config.db.url, {useNewUrlParser: true, useUnifiedTopology: true,useCreateIndex:true})
 if (config.seed){
     require('./server/util/seed')
 }

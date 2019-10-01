@@ -1,7 +1,13 @@
-import connect from 'react-redux'
-import Profile from './profile'
+import React, { Component } from 'react'
 
-const mapStatetoProps = (state) => ({})
-const mapDispatchtoProps = (dispatch) =>({})
+export class Profile extends Component {
+    render() {
+        return (
+            <div>
+                
+            </div>
+        )
+    }
+}
 
-export default connect(mapStatetoProps,mapStatetoProps)(Profile)
+export default Profile

@@ -1,5 +1,5 @@
 import {connect} from 'react-redux'
-import LoginSignup from './loginSignup.jsx'
+import LoginSignup from './loginSignup'
 import * as AuthActions from "../../actions/authActions"
 const mapStateToProps = (state, {location}) => {
     const formType = location.pathname.slice(1)

@@ -1,7 +1,6 @@
 import React, { Component } from 'react'
 import {Link, withRouter} from 'react-router-dom';
-import * as auth from '../../utilities/auth_util.js'
-import { thisExpression } from '@babel/types';
+
 export default class LoginSignup extends Component {
     constructor(props){
         super(props)
@@ -31,7 +30,7 @@ export default class LoginSignup extends Component {
         if ((newProps.auth.errors != null)&& (this.props.formType == newProps.formType)){
             alert("invalid Credentials")
         }else if ((newProps.auth.errors == null) && newProps.auth.token != null){
-            this.props.history.push("/tasks")
+            this.props.history.push("/profile")
         }
     }
 
@@ -40,10 +39,7 @@ export default class LoginSignup extends Component {
     getLinks = () =>{
         let emailTop, bottomLink;
         if(this.props.formType == 'signup'){
-            emailTop = <div className="form-group"> 
-            <label className="mr-2" htmlFor="email">Email</label>
-            <input className="form-control" onChange={this.update("email")}type="text" name="email" placeholder="email"/>
-            </div>
+            emailTop = ''
             bottomLink = <span>Already have an account <Link to='/login'>Login</Link></span>
         }else{
             emailTop = ''

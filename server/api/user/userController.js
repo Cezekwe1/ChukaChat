@@ -52,8 +52,9 @@ exports.put = function(req, res, next) {
 
 exports.post = function(req, res, next) {
     const newUser = new User(req.body);
-  
+    console.log("trying to send this", req.body, newUser)
     newUser.save(function(err, user) {
+      console.log("what we got", err, user)
       if(err) { return next(err);}
       const token = signToken(user._id);
       const username = user.username;

@@ -16,7 +16,8 @@ module.exports = {
           loader: "babel-loader",
           query: {
             presets: ["@babel/env", "@babel/react"]
-          }
+            
+          },
         }
       },
       {
@@ -36,7 +37,6 @@ module.exports = {
       }
     ]
   },
-  
   devtool: "source-maps",
   resolve: {
     extensions: [".js", ".jsx", "*"]

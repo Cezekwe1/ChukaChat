@@ -8,7 +8,7 @@ import {
   UPDATE_CURRENT_ORG_SUCCESS,
   ADD_ORG_SUCCESS
 } from "./types";
-import * as AuthUtil from "../utilities/auth_util.js";
+import * as AuthUtil from "../utilities/authUtil";
 
 const loginSuccess = data => ({
   type: LOGIN_SUCCESS,
@@ -50,12 +50,11 @@ const addOrgSuccess = data => ({
 });
 
 
-
 export const login = ({ username, password }) => dispatch => {
   return AuthUtil.login(username, password)
     .then(res => {
       const token = res.data.token;
-      const friends = res.data.friends;
+      const friends = res.data.user.friends;
       const user = res.data.user;
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
@@ -85,14 +84,7 @@ export const logout = () => dispatch =>
 
 export const checkAuthState = () => dispatch => {
   const token = localStorage.getItem("token");
-  const organizations = JSON.parse(localStorage.getItem("organizations"));
-  const current_organization = JSON.parse(
-    localStorage.getItem("current_organization")
-  );
   const friends = JSON.parse(localStorage.getItem("friends"));
-  const organization_members = JSON.parse(
-    localStorage.getItem("organization_members")
-  );
   const user = JSON.parse(localStorage.getItem("user"));
   if (token === undefined) {
     dispatch(logout());
@@ -100,44 +92,26 @@ export const checkAuthState = () => dispatch => {
     dispatch(
       loginSuccess({
         token,
-        current_organization,
-        organizations,
         friends,
-        organization_members,
         user
       })
     );
   }
 };
 
-export const signup = ({ username, password, email }) => dispatch => {
-  return AuthUtil.signup(username, password, email)
+export const signup = ({ username, password}) => dispatch => {
+  return AuthUtil.signup(username, password)
     .then(res => {
       const token = res.data.token;
-      const current_organization = res.data.current_organization;
-      const organizations = res.data.organizations;
-      const organization_members = res.data.organization_members;
-      const friends = res.data.friends;
+      const friends = res.data.user.friends;
       const user = res.data.user;
 
       localStorage.setItem("user", JSON.stringify(user));
       localStorage.setItem("token", token);
-      localStorage.setItem(
-        "current_organization",
-        JSON.stringify(current_organization)
-      );
-      localStorage.setItem("organizations", JSON.stringify(organizations));
-      localStorage.setItem(
-        "organization_members",
-        JSON.stringify(organization_members)
-      );
       localStorage.setItem("friends", JSON.stringify(friends));
       dispatch(
         signupSuccess({
           token,
-          current_organization,
-          organizations,
-          organization_members,
           friends,
           user
         })
