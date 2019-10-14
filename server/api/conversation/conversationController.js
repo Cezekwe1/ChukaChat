@@ -19,6 +19,7 @@ exports.param = function(req,res,next,id){
 }
 
 exports.post = function(req,res,next){
+    _.merge(req.body,{starter: req.user._id})
     var convo = new Conversation(req.body)
     convo.save(function(err,doc){
         if (err){next(err)}
@@ -28,7 +29,7 @@ exports.post = function(req,res,next){
 
 exports.getOne = function(req,res){
     var conversation = req.conversation
-    console.log(conversation)
+
     res.json(conversation)
 }
 

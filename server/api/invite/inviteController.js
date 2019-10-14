@@ -15,7 +15,7 @@ exports.param = function(req,res,next,id){
 }
 
 exports.get = function(req,res,next){
-    Invite.find({})
+    Invite.find({target: req.user._id})
         .then(function(invites){
             res.json(invites)
         })
@@ -29,6 +29,7 @@ exports.getOne = function(req,res){
 }
 
 exports.post = function(req,res,next){
+    _.merge(req.body, {inviter: req.user._id})
     var newInvite = new Invite(req.body)
     newInvite.save(function(err,invite){
         if (err){next(err)}

@@ -5,6 +5,7 @@ import LoginSignUpContainer from '../auth/loginSignupContainer'
 import NonPrivateRoute from '../../utilities/nonPrivateRoute'
 import PrivateRoute from '../../utilities/privateRoute'
 import ProfileContainer from '../profile/profileContainer'
+import ChatContainer from '../chat/chatContainer'
 import Nav from '../nav/navBarContainer'
 export class App extends Component {
     componentWillMount() {
@@ -29,9 +30,11 @@ export class App extends Component {
                 {nav}
                 <Switch>
                     <NonPrivateRoute exact path="/" component={Home} isAuthenticated={this.props.isAuthenticated}/>
-                    <NonPrivateRoute path="/login" component={LoginSignUpContainer} isAuthenticated={this.props.isAuthenticated}/>
-                    <NonPrivateRoute path="/signup" component={LoginSignUpContainer} isAuthenticated={this.props.isAuthenticated}/>
-                    <PrivateRoute path="/profile" component={ProfileContainer} isAuthenticated={this.props.isAuthenticated}/>
+                    <NonPrivateRoute path="/login" component={LoginSignUpContainer} isAuthenticated={this.props.isAuthenticated} />
+                    <NonPrivateRoute path="/signup" component={LoginSignUpContainer} isAuthenticated={this.props.isAuthenticated} />
+                    <PrivateRoute path="/chat" component={ChatContainer} isAuthenticated={this.props.isAuthenticated} />
+                    <PrivateRoute path="/users/:id" component={ProfileContainer} isAuthenticated={this.props.isAuthenticated} />
+
                 </Switch>
             </div>
         )

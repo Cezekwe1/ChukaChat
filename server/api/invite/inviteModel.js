@@ -35,7 +35,7 @@ InviteSchema.post('save', function(doc){
                 //     .then(function(doc){
                         
                 //     })
-                invite.inviter.friends.push(invite.target._id)
+                invite.inviter.friends.addToSet(invite.target._id)
                 invite.inviter.save(function(err,dix){
                     if (err){console.log(err)}
                     console.log(dix)
@@ -48,7 +48,7 @@ InviteSchema.post('save', function(doc){
                 //     .then(function(){
 
                 //     })
-                invite.target.friends.push(invite.inviter._id)
+                invite.target.friends.addToSet(invite.inviter._id)
                 invite.target.save(function(err,dix){
                     if (err){console.log(err)}
                     console.log(dix)

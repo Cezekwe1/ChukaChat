@@ -1,6 +1,6 @@
 var mongoose = require("mongoose");
 var Schema = mongoose.Schema;
-var bcrypt = require('bcrypt')
+var bcrypt = require("bcrypt");
 
 const UserSchema = Schema({
   username: {
@@ -14,12 +14,11 @@ const UserSchema = Schema({
   },
   displayName: String,
   friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "user" }],
-  conversations: [{ type: mongoose.Schema.Types.ObjectId, ref: "conversation"}]
+  conversations: [{ type: mongoose.Schema.Types.ObjectId, ref: "conversation" }]
 });
 
-
-UserSchema.pre('save', function(next) {
-  if (!this.isModified('password')) return next();
+UserSchema.pre("save", function(next) {
+  if (!this.isModified("password")) return next();
   this.password = this.encryptPassword(this.password);
   next();
 });
@@ -30,7 +29,7 @@ UserSchema.methods = {
   },
   encryptPassword: function(plainTextPword) {
     if (!plainTextPword) {
-      return '';
+      return "";
     } else {
       const salt = bcrypt.genSaltSync(10);
       return bcrypt.hashSync(plainTextPword, salt);
@@ -43,6 +42,4 @@ UserSchema.methods = {
   }
 };
 
-
-module.exports = mongoose.model('user', UserSchema);
-
+module.exports = mongoose.model("user", UserSchema);

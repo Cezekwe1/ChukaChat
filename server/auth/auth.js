@@ -17,6 +17,9 @@ exports.decodeToken = function() {
 exports.getFreshUser = function() {
   return function(req, res, next) {
     User.findById(req.user._id)
+      .populate("friends",'_id username')
+      .populate("conversations",'_id starter target')
+      .exec()
       .then(function(user) {
         if (!user) {
           res.status(401).send('Unauthorized');
@@ -41,6 +44,9 @@ exports.verifyUser = function() {
     }
 
     User.findOne({username: username})
+      .populate('friends','_id username')
+      .populate("conversations",'_id starter target')
+      .exec()
       .then(function(user) {
         if (!user) {
           res.status(401).send('Invalid Username');

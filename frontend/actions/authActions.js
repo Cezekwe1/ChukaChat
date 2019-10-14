@@ -49,43 +49,44 @@ const addOrgSuccess = data => ({
   payload: data
 });
 
-
 export const login = ({ username, password }) => dispatch => {
   return AuthUtil.login(username, password)
     .then(res => {
       const token = res.data.token;
       const friends = res.data.user.friends;
       const user = res.data.user;
+      const conversations = res.data.user.conversations
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
       localStorage.setItem("friends", JSON.stringify(friends));
+      localStorage.setItem("conversations", JSON.stringify(conversations));
       dispatch(
         loginSuccess({
           token,
           friends,
-          user
+          user,
+          conversations
         })
       );
     })
-    .catch(err => dispatch(loginFailure(err)));
+    .catch(err => {
+      dispatch(loginFailure(err));
+    });
 };
 
-export const logout = () => dispatch =>
-  AuthUtil.logout()
-    .then(() => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      localStorage.removeItem("friends");
-      dispatch(logoutSuccess());
-    })
-    .catch(err => {
-      dispatch(logoutFailure(err));
-    });
+export const logout = ()=> dispatch => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  localStorage.removeItem("friends");
+  localStorage.removeItem("conversations");
+  dispatch(logoutSuccess());
+};
 
 export const checkAuthState = () => dispatch => {
   const token = localStorage.getItem("token");
   const friends = JSON.parse(localStorage.getItem("friends"));
   const user = JSON.parse(localStorage.getItem("user"));
+  const conversations = JSON.parse(localStorage.getItem("conversations"))
   if (token === undefined) {
     dispatch(logout());
   } else {
@@ -93,27 +94,30 @@ export const checkAuthState = () => dispatch => {
       loginSuccess({
         token,
         friends,
-        user
+        user,
+        conversations
       })
     );
   }
 };
 
-export const signup = ({ username, password}) => dispatch => {
+export const signup = ({ username, password }) => dispatch => {
   return AuthUtil.signup(username, password)
     .then(res => {
       const token = res.data.token;
       const friends = res.data.user.friends;
       const user = res.data.user;
-
+      const conversations = res.data.user.conversations
       localStorage.setItem("user", JSON.stringify(user));
       localStorage.setItem("token", token);
       localStorage.setItem("friends", JSON.stringify(friends));
+      localStorage.setItem("conversations", JSON.stringify(conversations));
       dispatch(
         signupSuccess({
           token,
           friends,
-          user
+          user,
+          conversations
         })
       );
     })

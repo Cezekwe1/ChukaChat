@@ -24,9 +24,8 @@ ConversationSchema.post('save',function(doc,next){
         .populate('target', '_id conversations')
         .execPopulate(function(err, doc){
             if (err){next(err)}
-            console.log(doc)
-            doc.target.conversations.push(doc._id)
-            doc.starter.conversations.push(doc._id)
+            doc.target.conversations.addToSet(doc._id)
+            doc.starter.conversations.addToSet(doc._id)
             doc.target.save(function(err,doc){ if (err){next(err)}})
             doc.starter.save(function(err,doc){ if (err){next(err)}})
             next()

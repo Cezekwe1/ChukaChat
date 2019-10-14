@@ -7,7 +7,7 @@ import {
   withRouter
 } from "react-router-dom";
 
-export default function privateRoutes({ component: Component, isAuthenticated: isAuthenticated , ...rest }) {
+export default function privateRoutes({ component: Component, isAuthenticated: isAuthenticated , coin, ...rest }) {
   
   return (
     
@@ -19,7 +19,7 @@ export default function privateRoutes({ component: Component, isAuthenticated: i
         ) : (
           <Redirect
             to={{
-              pathname: "/profile",
+              pathname: `/chat`,
               state: { from: props.location }
             }}
           />

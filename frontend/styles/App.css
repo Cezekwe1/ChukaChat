@@ -3,7 +3,7 @@
 }
 
 .App-main-div {
-  height: 100%;
+  
 }
 
 .normal {
@@ -19,7 +19,10 @@
   height: 40vmin;
   pointer-events: none;
 }
+.max-height{
+  height: 100% !important;
 
+}
 #root {
   height: 100%;
 }
@@ -108,6 +111,24 @@ html {
 }
 .random-class{
   float: right;
+}
+
+.sender{
+  float: left;
+  color: white;
+  background-color: aquamarine;
+  clear: both;
+}
+
+.receiver{
+  float: right;
+  color: white;
+  background-color: gray;
+  clear: both;
+}
+
+.max-video{
+  height: 300px !important;
 }
 
 @keyframes App-logo-spin {

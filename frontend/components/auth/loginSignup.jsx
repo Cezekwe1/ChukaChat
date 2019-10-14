@@ -30,7 +30,7 @@ export default class LoginSignup extends Component {
         if ((newProps.auth.errors != null)&& (this.props.formType == newProps.formType)){
             alert("invalid Credentials")
         }else if ((newProps.auth.errors == null) && newProps.auth.token != null){
-            this.props.history.push("/profile")
+            this.props.history.push(`/chat`)
         }
     }
 

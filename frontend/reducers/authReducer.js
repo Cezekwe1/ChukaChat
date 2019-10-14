@@ -7,7 +7,9 @@ import {
     LOGOUT_FAILURE,
     UPDATE_CURRENT_ORG_SUCCESS,
     ADD_ORG_SUCCESS,
-    ADD_FRIEND_SUCCESS
+    ADD_FRIEND_SUCCESS,
+    UPDATE_SUCCESS,
+    MAKE_CONVO_SUCCESS
   } from "../actions/types";
   
   const instialState = {
@@ -15,6 +17,7 @@ import {
     token: null,
     friends: [],
     errors: null,
+    conversations: []
   };
   
   export default function(state = instialState, action) {
@@ -50,6 +53,7 @@ import {
           friends: action.payload.friends,
           organization_members: action.payload.organization_members,
           organizations: action.payload.organizations,
+          conversations: action.payload.conversations,
           errors: null
         };
         break;
@@ -72,6 +76,17 @@ import {
       case LOGOUT_SUCCESS:
         return instialState
         break;
+      case UPDATE_SUCCESS:
+        return{
+          ...state,
+          user: action.payload,
+          friends: action.payload.friends
+        }
+        break;
+      case MAKE_CONVO_SUCCESS:
+        return{
+          conversations: [...state.conversations,action.payload]
+        }
       default:
         return state;
     }

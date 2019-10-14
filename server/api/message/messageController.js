@@ -1,5 +1,6 @@
 var model = require('./messageModel')
 var Message = require('./messageModel')
+var _ = require('lodash')
 exports.param = function(req,res,next,id){
     Message.findById(id)
         .then(function(err,message){
@@ -24,10 +25,11 @@ exports.convoParam = function(req, res,next,id){
 }
 
 exports.getAllConvoMessages = function(req,res){
-    res.json({ messages : req.messages })
+    res.json(req.messages)
 }
 
-exports.post = function(req,res){
+exports.post = function(req,res,next){
+    _.merge(req.body, {sender: req.user._id})
     var newMessage = new Message(req.body)
     newMessage.save(function(err,doc){
         if (err){next(err)}

@@ -8,11 +8,14 @@ const middleware = [thunk]
 const user = window.localStorage.getItem('user')
 const token = window.localStorage.getItem("token")
 const friends = JSON.parse(window.localStorage.getItem("friends")) || []
+const conversations = JSON.parse(window.localStorage.getItem("conversations")) || []
+
 
 initialState["auth"] = {
     token,
     user,
-    friends
+    friends,
+    conversations
 }
 const store = createStore(rootReducer, initialState, applyMiddleware(...middleware))
 export default store
