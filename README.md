@@ -8,4 +8,4 @@ ChukaChat is a full-stack video-chat real-time chat. ChukaChat built with Expres
 ### Requirements
 works best with google Chrome browser on a laptop not mobile device.
 
-[image of splash](/splash/preview.png)
+![image of splash](/splash/preview.png)
