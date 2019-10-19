@@ -9,7 +9,7 @@ var socketEvents = require('./server/socketEvents')
 
 mongoose.connect(config.db.url, {useNewUrlParser: true, useUnifiedTopology: true,useCreateIndex:true})
 if (config.seed){
-    // require('./server/util/seed')
+    require('./server/util/seed')
 }
 
 
