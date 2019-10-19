@@ -69,13 +69,13 @@ export class VideoChat extends Component {
       this.props.setPeer(this.props.otherVidId, undefined);
       // this.props.socket.emit('reject call',{id: this.props.id})
       this.props.stream.getTracks()[0].stop();
-      
+      this.props.stream.getTracks()[1].stop();
     } else {
       if (this.myPeer) {
         this.myPeer.destroy();
       }
-
       this.stream.getTracks()[0].stop();
+      this.stream.getTracks()[1].stop();
       this.props.setPeer(this.props.otherId, undefined);
       // this.props.socket.emit('reject call',{myId: true,  id: this.props.otherId})
     }
