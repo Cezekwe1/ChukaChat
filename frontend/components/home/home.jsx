@@ -2,6 +2,10 @@ import React, { Component } from 'react'
 import {NavLink} from 'react-router-dom';
 
 export class Home extends Component {
+    login = (user) =>{
+        this.props.login({username: user, password: "test"})
+        .then(()=>this.props.history.push("/chat"))
+    }
     render() {
         return (
             <div className="home-screen">
@@ -11,8 +15,8 @@ export class Home extends Component {
                 </div>
 
                 <div className="mt-2">
-                    <button className="btn btn-outline-success ml-2 mr-2 btn-lg">Sign In Guest 1</button>
-                    <button className="btn btn-outline-success btn-lg">Sign In Guest 2</button>
+                    <button onClick={()=>this.login("guest1")} className="btn btn-outline-success ml-2 mr-2 btn-lg">Sign In Guest 1</button>
+                    <button onClick={()=>this.login("guest2")} className="btn btn-outline-success btn-lg">Sign In Guest 2</button>
                 </div>
             </div>
         )

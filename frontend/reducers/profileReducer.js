@@ -23,7 +23,7 @@ import {
           ...state,
           user: {
             ...state.user,
-            pending_friend: true
+            pending: true
           }
         };
       case SENT_ORG_INVITE_SUCCESS:
@@ -38,12 +38,13 @@ import {
         return obj;
       case REMOVE_FRIEND_SUCCESS:
         let obj1;
-        if (action.payload == state.user.id) {
+        if (action.payload == state.user._id) {
          
           obj1 = {
             ...state,
             user: {
               ...state.user,
+              pending: false,
               are_friends: false
             }
           };

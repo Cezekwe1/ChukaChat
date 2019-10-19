@@ -44,27 +44,17 @@ export const sendOrgInvite = (id) => (dispatch) =>{
 }
 
 export const sendFriendRequest = (id) => (dispatch) =>{
-    return Profile_Util.sendFriendInvite(id).then(()=>{
-        dispatch(sentFriendRequestSuccess())
+    return Profile_Util.sendFriendInvite(id).then((res)=>{
+        if(res.data){
+            dispatch(sentFriendRequestSuccess())
+        }
     }).catch(err => dispatch(AuthActions.logout()))
 }
 
 export const removeFriend = (id) =>(dispatch) =>{
     return Profile_Util.removeFriend(id).then((res)=>{
-        let friends = JSON.parse(localStorage.getItem("friends"))
-        let idx
-        for (let i in friends){
-            let current = friends[i]
-            if(current == id){
-                idx = parseInt(i)
-                break;
-            }
-        }
-        if(idx){
-            friends.splice(idx,1)
-        }
-        localStorage.setItem("friends",JSON.stringify(friends))
-        dispatch(updateSuccess(res.data)) 
+        dispatch(removeFriendSuccess(id))
+        dispatch(AuthActions.getMe())
     }).catch(err => dispatch(AuthActions.logout()))
 }
 

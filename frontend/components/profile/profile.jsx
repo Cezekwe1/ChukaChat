@@ -9,21 +9,21 @@ export class Profile extends Component {
 
   componentWillMount() {
     this.props.getProfile(this.props.id).then(() => {
+      
       this.setState({
         user: this.props.profile,
-        pending_friend: this.props.profile.pending_friend,
+        pending_friend: this.props.pending,
         pending_org: this.props.profile.pending_org
       });
     });
   }
 
   componentWillReceiveProps(nextProps, oldProps) {
-   
     if (nextProps.id != nextProps.profile._id) {
       this.props.getProfile(this.props.id).then(() => {
         this.setState({
           user: this.props.profile,
-          pending_friend: this.props.profile.pending_friend,
+          pending_friend: this.props.pending,
           pending_org: this.props.profile.pending_org
         });
       });
@@ -31,11 +31,10 @@ export class Profile extends Component {
     if (nextProps.profile != this.state.user) {
       this.setState({
         user: nextProps.profile,
-        pending_friend: nextProps.profile.pending_friend,
+        pending_friend: this.props.pending,
         pending_org: nextProps.profile.pending_org
       });
     }
-    
   }
 
   actionButtons() {
@@ -47,14 +46,20 @@ export class Profile extends Component {
       if (this.props.areFriends) {
         removeFriend = (
           <button
-            onClick={() => this.props.removeFriend(this.state.user._id)}
+            onClick={() => {
+              this.props
+                .removeFriend(this.state.user._id)
+                .then(() =>
+                  this.props.socket.emit("remove friend", { id: this.props.id })
+                );
+            }}
             className="btn mt-5 mr-2 btn-primary"
           >
             Remove Friend
           </button>
         );
       } else {
-        if (this.state.pending_friend) {
+        if (this.props.pending) {
           addFriend = (
             <button className="btn mt-5 mr-2 btn-secondary disabled">
               Add Friend
@@ -63,7 +68,13 @@ export class Profile extends Component {
         } else {
           addFriend = (
             <button
-              onClick={() => this.props.sendFriendRequest(this.state.user._id)}
+              onClick={() => {
+                this.props.sendFriendRequest(this.state.user._id).then(() => {
+                  this.props.socket.emit("send friend request", {
+                    id: this.props.id
+                  });
+                });
+              }}
               className="btn mt-5 mr-2 btn-success"
             >
               Add Friend
@@ -144,11 +155,12 @@ export class Profile extends Component {
     } = this.actionButtons();
     return (
       <div className="h-100">
-        <div className="card card-block w-50  mt-5 h-50 mx-auto ">
+        <div
+          className="card card-block w-50  mt-5 h-50 mx-auto"
+          style={{ minHeight: "400px" }}
+        >
           <div className="card-body text-center">
-            <h2>{this.state.user.username}</h2>
-            <h6>{this.state.user.email}</h6>
-            <h6>{this.state.user.is_admin ? "administrator" : ""}</h6>
+            <h2 className="text-capitalize">{this.state.user.username}</h2>
             {addToOrganization}
             {removeMember}
             {addFriend}

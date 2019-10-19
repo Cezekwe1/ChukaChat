@@ -51,21 +51,17 @@ const addFriendSuccess = data => ({
 
 export const getNotifications = data => dispatch => {
   return Notifications_Util.getNotifications().then(res => {
-    
     dispatch(getNotificationsSuccess(res.data));
   }).catch(err => dispatch(AuthActions.logout()));
 };
 
 export const respondFriendRequest = data => dispatch => {
   return Notifications_Util.respondFriendRequest(data).then(res => {
-    if (data["accepted"]) {
-      dispatch(addFriendSuccess(res.data["new_friend"]));
-      let friends = JSON.parse(localStorage.getItem("friends"));
-      friends.push(res.data["new_friend"]);
-      localStorage.setItem("friends", JSON.stringify(friends));
-    }
-    dispatch(respondFriendRequestSuccess(res.data));
-  }).catch(err => dispatch(AuthActions.logout()));
+    dispatch(respondFriendRequestSuccess(res.data))
+    dispatch(AuthActions.getMe());
+  }).catch(err => {
+    dispatch(AuthActions.logout())
+  });
 };
 
 export const respondOrgInvite = data => dispatch => {

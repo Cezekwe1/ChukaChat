@@ -13,16 +13,28 @@ export class NavBar extends Component {
       friendRequests: [],
       acceptedFriendRequests: [],
       seen: false,
-      menu: false
+      menu: false,
+      searchText:"",
     };
     this.openNotificationsList = this.openNotificationsList.bind(this);
     this.toggleMenu = this.toggleMenu.bind(this);
+    this.props.socket.on("receive friend request",data =>{
+      
+      this.props.getNotifications().then((res)=>{
+        this.setState({
+          friendRequests: this.props.notifications.friendRequests
+        })
+        
+      })})
   }
 
   search() {
     return e => {
       var val = e.target.value;
-      if (val.match(/^[a-zA-Z]+$/)) {
+      this.setState({
+        searchText: val
+      })
+      if (val.match(/^[a-zA-Z0-9]+$/)) {
         this.props.search(val).then(() => {
           this.setState({
             filteredMembers: this.props.filteredMembers
@@ -47,7 +59,6 @@ export class NavBar extends Component {
     });
   }
 
-
   componentDidUpdate(nextProps, prevProps) {
     if (nextProps.filteredMembers != prevProps.filteredMembers) {
       this.setState({
@@ -58,17 +69,16 @@ export class NavBar extends Component {
 
   goToProfile(id) {
     return e => {
+      this.setState({
+        searchText: ""
+      })
       this.props.history.push(`/users/${id}`);
       this.props.clearOutSearch();
-      this.setState({ filteredMembers: [] });
+      this.setState({ filteredMembers: [], menu: false });
     };
   }
 
-
- 
-
-  emptyNotification() {
-  }
+  emptyNotification() {}
 
   showNotifications() {
     var notificationsList;
@@ -80,30 +90,32 @@ export class NavBar extends Component {
         <ul className="list-group pop position-absolute">
           {this.state.friendRequests.map(invite => {
             return (
-              <li className="list-group-item">
+              <li key={invite._id} className="list-group-item notifications">
                 {invite.inviter.username} wants to be friends{" "}
-                <button
-                  onClick={() =>
+                <span
+                  onClick={() => {
                     this.props.respondFriendRequest({
                       id: invite._id,
                       accepted: true
-                    })
-                  }
-                  className="btn btn-success"
+                    }).then(()=>{
+                      this.props.socket.emit('accept friend request',{ id: invite.inviter._id});
+                    });
+                  }}
+                  className="text-success"
                 >
                   Accept
-                </button>{" "}
-                <button
+                </span>{" "}
+                <span
                   onClick={() =>
                     this.props.respondFriendRequest({
                       id: invite._id,
                       accepted: false
                     })
                   }
-                  className="btn btn-danger"
+                  className="text-danger"
                 >
                   Reject
-                </button>{" "}
+                </span>{" "}
               </li>
             );
           })}
@@ -124,16 +136,26 @@ export class NavBar extends Component {
 
   logout() {
     this.props.clearOutSearch();
-    this.props.logout()
+    this.props.logout();
+    this.props.clearConvo();
     this.props.history.push("/");
-  
   }
+
+  goToChat = () => {
+    this.props.history.push("/chat");
+    this.setState({
+      menu: false
+    });
+  };
 
   loadMenu() {
     var menu;
     if (this.state.menu) {
       menu = (
         <ul className="list-group w-100 pop  mt-1 position-absolute">
+          <li className="list-group-item" onClick={this.goToChat}>
+            Chat
+          </li>
           <li className="list-group-item" onClick={this.logout}>
             Logout
           </li>
@@ -161,22 +183,24 @@ export class NavBar extends Component {
     var notifications = this.showNotifications();
     var menu = this.loadMenu();
     return (
-      <nav className="navbar  navbar-light bg-light">
+      <nav className="navbar border-bottom navbar-light bg-light">
+        <h4 onClick={this.goToChat} className="text-capitalize home-link">{this.props.auth.user.username}</h4>
         <div className="position-relative">
-          <form className="form-inline w-100">
+          <form className="form-inline mb-0 w-100">
             <input
               onChange={this.search()}
               className="form-control"
               type="search"
               placeholder="Search"
               aria-label="Search"
+              value={this.state.searchText}
             />
           </form>
-          <ul className="list-group w-100 pop  mt-1 position-absolute ">
+          <ul className="list-group w-100 pop position-absolute ">
             {this.state.filteredMembers.map(member => {
-              
               return (
                 <li
+                  key={member._id}
                   onClick={this.goToProfile(member._id)}
                   className="list-group-item"
                 >
@@ -194,10 +218,7 @@ export class NavBar extends Component {
           >
             Notifications{" "}
             <span className="badge badge-light">
-              {this.state.seen == false
-                ?
-                  this.state.friendRequests.length 
-                : 0}
+              {this.state.seen == false ? this.state.friendRequests.length : 0}
             </span>
           </button>
           {notifications}

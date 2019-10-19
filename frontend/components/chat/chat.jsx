@@ -1,18 +1,16 @@
 import React, { Component } from "react";
 import { Collection } from "mongoose";
-import io from "socket.io-client";
 import Video from "./videoChat";
 import Peer from "simple-peer";
 import * as PeerUtil from "./peerUtil";
-var socket = io();
+import { thisExpression } from "@babel/types";
 
 export class Chat extends Component {
   constructor(props) {
-    
     super(props);
-    this.friendsObj = {};
+    this.friendsObj = { length: 0 };
     this.state = {
-      currentConvo: null,
+      currentConvo: this.props.currentConvo,
       text: "",
       calling: false,
       otherId: null,
@@ -21,22 +19,81 @@ export class Chat extends Component {
       openRinger: false,
       answered: null,
       caller: null,
-      onCall: false
+      onCall: false,
+      notifications: {}
     };
     this.friendsObj[this.props.me._id] = "Me";
     this.stream = null;
+
     this.process();
-    this.peers = {};
-    socket.on("receive message", data => {
+    
+    this.props.socket.on("receive message", data => {
       if (this.state.currentConvo) {
         props.addMessage(data.message);
+        this.scrollToBottom();
       }
     });
-    socket.emit("join video channel", {id: this.props.me._id})
-    this.setUpSocket();
+
+    this.props.socket.on("receive notification", data => {
+      this.checkFor(data).then(() => {
+        if (
+          !this.state.currentConvo ||
+          data.conversation != this.state.currentConvo._id
+        ) {
+          this.setNotifications(data.conversation, true);
+        }
+      });
+    });
+    this.peers = {};
+  }
+  componentWillMount() {
+    this.props.getMe();
+  }
+  componentDidMount() {
+    
+    if (this.state.currentConvo) {
+      this.setConvo(this.state.currentConvo)();
+    }
   }
 
-  
+  componentWillUpdate() {
+    if (this.props.friends.length > this.friendsObj.length) {
+      let last = this.props.friends.length - 1;
+      let el = this.props.friends[last];
+      this.friendsObj[el._id] = el.username;
+      this.friendsObj.length += 1;
+    }
+  }
+
+  checkFor = data => {
+    return new Promise((resolve, reject) => {
+      for (let convo of this.props.conversations) {
+        if (data.conversation == convo._id) {
+          resolve();
+        }
+      }
+      this.props
+        .getMe()
+        .then(res => {
+          resolve();
+        })
+        .catch(() => reject());
+    });
+  };
+
+  setNotifications = (convo, val) => {
+    this.state.notifications[convo] = val;
+    let newState = this.state.notifications;
+    this.setState({
+      notifications: newState
+    });
+  };
+  setLastConvo = () => {
+    
+    this.setConvo(
+      this.props.conversations[this.props.conversations.length - 1]
+    )();
+  };
 
   setPeer = (id, val) => {
     this.peers[id] = val;
@@ -48,93 +105,13 @@ export class Chat extends Component {
     });
   };
 
-  setUpSocket = () => {
-    socket.on("signal", data => {
-
-      let peer = this.peers[data.userId];
-      
-      console.log("signal i got ",peer)
-      if (peer) {
-        console.log("back in here")
-        peer.signal(data.info);
-      }
-
-      if(this.state.oncall){
-        socket.emit("reject call", {id:data.userId})
-        return
-      }
-
-      if (peer === undefined) {
-        this.setRinger(data.username, true)
-          .then(promise => {
-            
-            clearInterval(promise.interval);
-            clearTimeout(promise.timer);
-            this.setState({
-              answered: null
-            });
-            PeerUtil.getUserMedia().then(stream => {
-              this.stream = stream;
-              this.setState({
-                calling: true,
-                incoming: true,
-                onCall: true
-              });
-              this.otherVidId = data.userId
-              peer = PeerUtil.createPeer(
-                data.userId,
-                false,
-                this.stream,
-                this.state.otherVid,
-                this.setPeer,
-                this.props.me._id,
-                socket
-              );
-              this.myPeer = peer;
-              this.peers[data.userId] = peer;
-              peer.signal(data.info);
-            });
-          })
-          .catch(promise => {
-            clearInterval(promise.interval);
-            clearTimeout(promise.timer);
-            this.setState({
-              answered: null,
-              onCall: false
-            });
-            socket.emit('reject call',{id: data.userId})
-          });
-      }
-    });
-  };
-
   getMyPeer = () => this.myPeer;
 
-  setRinger = (name, val) => {
-    this.setState({
-      caller: name,
-      openRinger: val
-    });
-
-    return new Promise((resolve, reject) => {
-      let timer;
-      let interval = setInterval(() => {
-        
-        if (this.state.answered) {
-          resolve({ interval, timer });
-        } else if (this.state.answered === false) {
-          reject({ timer, interval });
-        }
-      }, 10);
-      timer = setTimeout(() => {
-        reject({ timer, interval });
-      }, 60000);
-    });
-  };
-
   process = () => {
+    this.friendsObj.length = 0;
     this.props.friends.forEach(el => {
       this.friendsObj[el._id] = el.username;
+      this.friendsObj.length += 1;
     });
   };
 
@@ -144,13 +121,27 @@ export class Chat extends Component {
     });
   };
 
-  setOnCall = (val) =>{
+  setOnCall = val => {
     this.setState({
-      onCall: val 
-    })
-  }
+      onCall: val
+    });
+  };
 
-  handleSubmit = () => {
+  enterKeySubmit = e => {
+    if (e.keyCode == 13) {
+      this.handleSubmit(e);
+    }
+  };
+
+  getSplash = () => {
+    var img = "";
+    if (!this.state.currentConvo) {
+      img = <img className="splash-screen" src="../images/new_cover.png" />;
+    }
+    return img;
+  };
+
+  handleSubmit = e => {
     if (this.state.currentConvo) {
       this.props
         .sendMessage({
@@ -159,22 +150,42 @@ export class Chat extends Component {
           conversation: this.state.currentConvo._id
         })
         .then(res => {
-          socket.emit("send message", {
+          this.props.socket.emit("send message", {
             conversation: this.state.currentConvo._id,
-            message: res.payload
+            message: res.payload,
+            sender: this.props.me._id
           });
+          this.setState({
+            text: ""
+          });
+          this.scrollToBottom();
         });
     }
   };
 
   setConvo = convo => {
-    var other = (convo.target != this.props.me._id)? convo.target : convo.starter;
-    var obj = { _id: convo._id, other };
+    
+    var other =
+      convo.target != this.props.me._id ? convo.target : convo.starter;
+    var obj = {
+      _id: convo._id,
+      other,
+      target: convo.target,
+      starter: convo.starter
+    };
 
     return e => {
-      socket.emit("join conversation", { conversation: convo._id });
-
-      this.props.getAllMessages(convo._id);
+      if (this.state.currentConvo) {
+        this.props.socket.emit("leave conversation", {
+          conversation: this.state.currentConvo._id
+        });
+      }
+      this.setNotifications(convo._id, false);
+      this.props.socket.emit("join conversation", { conversation: convo._id });
+      this.props.setCurrentConvo(obj);
+      this.props.getAllMessages(convo._id).then(() => {
+        this.scrollToBottom();
+      });
       this.setState({
         currentConvo: obj,
         otherId: other
@@ -192,43 +203,11 @@ export class Chat extends Component {
     return true;
   };
 
-  answerCall = val => {
-    this.setState({
-      answered: val,
-      openRinger: false
-    });
-  };
-  getRinger = () => {
-    var ringer;
-    if (this.state.openRinger) {
-      ringer = (
-        <div className="card">
-          <button
-            onClick={() => this.answerCall(true)}
-            className="btn btn-md btn-success"
-          >
-            Answer
-          </button>
-          <button
-            onClick={() => this.answerCall(false)}
-            className="btn btn-md btn-warning"
-          >
-            Decline
-          </button>
-        </div>
-      );
-    } else {
-      ringer = "";
-    }
-    return ringer;
-  };
-
   turnOffVideo = () => {
     this.setState({
       incoming: false,
       calling: false
     });
-    
   };
 
   getVideo = () => {
@@ -236,118 +215,197 @@ export class Chat extends Component {
     if (this.state.calling) {
       video = (
         <Video
-          socket={socket}
+          socket={this.props.socket}
           stream={this.stream}
           otherId={this.state.otherId}
-          setPeer={this.setPeer}
+          setPeer={this.props.setPeer}
           id={this.props.me._id}
-          setOtherVid={this.setOtherVid}
+          username={this.props.me.username}
+          setOtherVid={this.props.setOtherVid}
           incoming={this.state.incoming}
           getPeer={this.getMyPeer}
           turnOffVideo={this.turnOffVideo}
-          setOnCall={this.setOnCall}
+          setOnCall={this.props.setOnCall}
           otherVidId={this.otherVidId}
         />
       );
     } else {
       video = "";
     }
-    return { video };
+    return video;
+  };
+
+  setInputBtn = () => {
+    var bottomInputGroup = "";
+    if (this.state.currentConvo) {
+      bottomInputGroup = (
+        <div className="bottom-input input-group">
+          <input
+            onChange={this.handleChange}
+            type="text"
+            className="form-control"
+            value={this.state.text}
+            onKeyDown={this.enterKeySubmit}
+          />
+          <div className="input-group-append">
+            <span
+              onClick={this.handleSubmit}
+              className="clickable input-group-text"
+              id="basic-addon2"
+            >
+              Send
+            </span>
+          </div>
+        </div>
+      );
+    }
+    return bottomInputGroup;
+  };
+
+  scrollToBottom = () => {
+    var height = this.refs.messages.scrollHeight;
+    this.refs.messages.scrollTop = height;
   };
 
   getCallBtn = () => {
-    if (this.state.currentConvo) {
+    if (this.state.currentConvo && !this.props.onCall) {
       return (
         <button
+          className="rounded-pill btn-outline-success call-btn p-3 shadow-lg"
           onClick={() => {
             this.setState({ calling: true });
           }}
-        ></button>
+        >
+          Call
+        </button>
       );
     } else {
       return "";
     }
   };
+
+  deleteFriend = person => {
+    return e => {
+      e.stopPropagation();
+      this.props.deleteFriend(person._id);
+    };
+  };
+
+  deleteConversation = convo =>{
+    return e => {
+      e.stopPropagation()
+      if (this.state.currentConvo._id == convo._id){
+        this.setState({
+          currentConvo: null
+        })
+        this.props.socket.emit("leave conversation", {
+          conversation: this.state.currentConvo._id
+        });
+        this.props.setCurrentConvo(null)
+      }
+      this.props.deleteConversation(convo._id)
+    }
+  }
   render() {
-    let { video } = this.getVideo();
+    let video = this.getVideo();
     let callBtn = this.getCallBtn();
-    let ringer = this.getRinger();
+    let bottomInputGroup = this.setInputBtn();
+    let splash = this.getSplash();
     return (
-      <div className="container-fluid max-height">
-        <div className="row max-height">
-          <div className="bg-light col-2 p-0">
-            Conversations
-            <ul>
-              {this.props.conversations.map(convo => {
-                return (
-                  <li key={convo._id} onClick={this.setConvo(convo)}>{`${
-                    this.friendsObj[convo.starter]
-                  },${this.friendsObj[convo.target]}`}</li>
-                );
-              })}
-            </ul>
-            Friends
-            <ul>
-              {this.props.friends
-                .filter(friend => {
-                  return this.convoFilter(friend);
-                })
-                .map(person => {
-                  return (
-                    <li
-                      onClick={() => this.props.makeConvo(person._id)}
-                      key={person._id}
-                    >
-                      {person.username}
-                    </li>
-                  );
-                })}
-            </ul>
-          </div>
-          <div className="col-10 p-0">
-            <h1>
-              {this.state.currentConvo
-                ? this.friendsObj[this.state.currentConvo.other]
-                : "Pick a Convo"}
-            </h1>
-            <div className="max-height">
-              {this.props.messages.map((message, idx) => {
-                return (
-                  <div
-                    key={idx}
-                    className={
-                      message.sender == this.props.me._id
-                        ? "sender"
-                        : "receiver"
-                    }
-                  >
-                    {message.text}
-                  </div>
-                );
-              })}
-              {ringer}
-              {callBtn}
-              {video}
-            </div>
-            <div className="input-group">
-              <input
-                onChange={this.handleChange}
-                type="text"
-                className="form-control"
-              />
-              <div className="input-group-append">
-                <span
-                  onClick={this.handleSubmit}
-                  className="input-group-text"
-                  id="basic-addon2"
+      <section className="container-fluid p-0 m-0 row max-height">
+        <aside className="bg-light border-right col-2 pt-5 p-0" align="center">
+          Conversations
+          <ul className="mt-3 mb-4 text-secondary">
+            {this.props.conversations.map(convo => {
+              return (
+                <li
+                  className={
+                    this.state.notifications[convo._id]
+                      ? "clickable text-primary"
+                      : "clickable"
+                  }
+                  key={convo._id}
+                  onClick={() => this.setConvo(convo)()}
                 >
-                  @example.com
-                </span>
-              </div>
-            </div>
+                  {`${this.friendsObj[convo.starter]},${" "}${
+                    this.friendsObj[convo.target]
+                  }`}
+
+                  <span
+                    onClick={this.deleteConversation(convo)}
+                    className="close icon mr-2"
+                  >
+                    &times;
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          Friends
+          <ul className="mt-3">
+            {this.props.friends
+              .filter(friend => {
+                return this.convoFilter(friend);
+              })
+              .map(person => {
+                
+                return (
+                  <li
+                    className="clickable"
+                    onClick={() =>
+                      this.props.makeConvo(person._id).then(() => {
+                        this.setLastConvo();
+                      })
+                    }
+                    key={person._id}
+                  >
+                    {person.username}
+                    <span
+                      onClick={this.deleteFriend(person)}
+                      className="close icon mr-2"
+                    >
+                      &times;
+                    </span>
+                  </li>
+                );
+              })}
+          </ul>
+        </aside>
+        <section
+          className="max-height  position-relative col-10 p-0"
+          align="center"
+        >
+          <h1 className=" messaging-header position-absolute">
+            {this.state.currentConvo
+              ? this.friendsObj[this.state.currentConvo.other]
+                  .charAt(0)
+                  .toUpperCase() +
+                this.friendsObj[this.state.currentConvo.other].slice(1)
+              : ""}
+          </h1>
+
+          <div ref="messages" className="h-100 text-center overflow-auto p-5">
+            {splash}
+            {this.props.messages.map((message, idx) => {
+              return (
+                <div
+                  key={idx}
+                  className={
+                    message.sender == this.props.me._id
+                      ? "sender  rounded-pill shadow d-block w-15 p-2 mb-3"
+                      : "receiver rounded-pill shadow d-block w-15 p-2 mb-3"
+                  }
+                >
+                  {message.text}
+                </div>
+              );
+            })}
+            {callBtn}
+            {video}
           </div>
-        </div>
-      </div>
+          {bottomInputGroup}
+        </section>
+      </section>
     );
   }
 }

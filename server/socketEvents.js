@@ -5,8 +5,30 @@ module.exports = function(io){
 
         socket.on('disconnect',function(){
 
-            console.log(socket.id,"he left")
+            
         })
+        socket.on('join notification channel',function(data){
+            socket.join(`${data.id} channel`)
+        })
+        socket.on('send friend request',function(data){
+            socket.join(`${data.id} channel`)
+            socket.broadcast.to(`${data.id} channel`).emit("receive friend request",{})
+            socket.leave(`${data.id} channel`)
+        })
+
+        socket.on('accept friend request', function(data){
+            
+            socket.join(`${data.id} channel`)
+            socket.broadcast.to(`${data.id} channel`).emit("accept friend request",{})
+            socket.leave(`${data.id} channel`)
+        })
+
+        socket.on("remove friend", function(data){
+            socket.join(`${data.id} channel`)
+            socket.broadcast.to(`${data.id} channel`).emit("remove friend",{})
+            socket.leave(`${data.id} channel`)
+        })
+
         socket.on('join conversation',function(data){
             socket.join(data.conversation)
         })
@@ -15,15 +37,14 @@ module.exports = function(io){
         })
         socket.on('send message',function(data){
             socket.broadcast.to(data.conversation).emit('receive message', data);
+            socket.broadcast.emit("receive notification",data)
         })
         socket.on('signal',function(data){
             let room = `conversation-${data.id}`
             let current = io.sockets.adapter.rooms[room]
-            console.log(current, "this is what the room currently is")
+            
             socket.join(room)
             socket.broadcast.to(room).emit('signal',data)
-    
-            
         })
 
         socket.on('join video channel',function(data){

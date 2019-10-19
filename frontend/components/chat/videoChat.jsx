@@ -21,7 +21,7 @@ export class VideoChat extends Component {
 
   setUpCallSocket = () => {
     this.props.socket.on("reject call", () => {
-      console.log("yo");
+      
       this.close();
     });
   };
@@ -35,7 +35,8 @@ export class VideoChat extends Component {
       this.refs.video2,
       this.props.setPeer,
       this.props.id,
-      this.props.socket
+      this.props.socket,
+      this.props.username
     );
 
     this.props.setPeer(this.props.otherId, this.myPeer);
@@ -68,7 +69,7 @@ export class VideoChat extends Component {
       this.props.setPeer(this.props.otherVidId, undefined);
       // this.props.socket.emit('reject call',{id: this.props.id})
       this.props.stream.getTracks()[0].stop();
-      console.log("calling");
+      
     } else {
       if (this.myPeer) {
         this.myPeer.destroy();
@@ -85,10 +86,10 @@ export class VideoChat extends Component {
 
   render() {
     return (
-      <div>
-        <button onClick={this.close}>Close</button>
-        <video ref="video"></video>
-        <video ref="video2"></video>
+      <div className="video-container">
+        <button className="video-close-btn btn btn-outline-danger" onClick={this.close}>Hang Up</button>
+        <video className="inner-video" ref="video"></video>
+        <video className="outer-video" ref="video2"></video>
       </div>
     );
   }

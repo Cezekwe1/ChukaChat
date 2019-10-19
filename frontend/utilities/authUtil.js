@@ -6,6 +6,11 @@ export const login = (username, password) => {
     return axios.post( `${API_URL}/auth/signin/`, {username,password})
 }
 
+export const getMe = () =>{
+    
+    return axios.get(`${API_URL}/api/users/me?access_token=${localStorage.getItem('token')}`)
+}
+
 export const signup = (username, password) => {
     return axios.post( `${API_URL}/api/users/`, {username,password})
 }
@@ -21,3 +26,4 @@ export const changeCurrentOrg = (id) =>{
 export const addOrg = (data) =>{
     return axios.post(`${API_URL}/orgs/create`,data,{headers: {"Authorization": "Token " + localStorage.getItem("token")}})
 }
+

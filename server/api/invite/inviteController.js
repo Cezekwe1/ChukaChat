@@ -16,6 +16,8 @@ exports.param = function(req,res,next,id){
 
 exports.get = function(req,res,next){
     Invite.find({target: req.user._id})
+        .populate('inviter', '_id username')
+        .exec()
         .then(function(invites){
             res.json(invites)
         })
@@ -32,7 +34,7 @@ exports.post = function(req,res,next){
     _.merge(req.body, {inviter: req.user._id})
     var newInvite = new Invite(req.body)
     newInvite.save(function(err,invite){
-        if (err){next(err)}
+        if (err){return next(err)}
         res.json(invite)
     })
 } 
@@ -51,4 +53,12 @@ exports.delete = function(req,res,next){
         if (err){next(err)}
         res.json(del_invite)
     })
+}
+
+exports.error = function(err,req,res,next){
+    if(err.message == "not unique invite"){
+        return res.send()
+    }
+    
+    next(err)
 }

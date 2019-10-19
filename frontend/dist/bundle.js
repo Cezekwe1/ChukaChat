@@ -90,7 +90,7 @@
 /*!*****************************************!*\
   !*** ./frontend/actions/authActions.js ***!
   \*****************************************/
-/*! exports provided: login, logout, checkAuthState, signup, updateOrg, addOrg */
+/*! exports provided: login, logout, checkAuthState, signup, updateOrg, addOrg, getMe */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -101,8 +101,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "signup", function() { return signup; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "updateOrg", function() { return updateOrg; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "addOrg", function() { return addOrg; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getMe", function() { return getMe; });
 /* harmony import */ var _types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./types */ "./frontend/actions/types.js");
 /* harmony import */ var _utilities_authUtil__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../utilities/authUtil */ "./frontend/utilities/authUtil.js");
+/* harmony import */ var _chatActions__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./chatActions */ "./frontend/actions/chatActions.js");
+/* harmony import */ var _searchActions__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./searchActions */ "./frontend/actions/searchActions.js");
+
+
 
 
 
@@ -191,6 +196,8 @@ var logout = function logout() {
     localStorage.removeItem("user");
     localStorage.removeItem("friends");
     localStorage.removeItem("conversations");
+    dispatch(_chatActions__WEBPACK_IMPORTED_MODULE_2__["clearConvo"]());
+    dispatch(_searchActions__WEBPACK_IMPORTED_MODULE_3__["clearOut"]());
     dispatch(logoutSuccess());
   };
 };
@@ -262,6 +269,28 @@ var addOrg = function addOrg(org) {
     });
   };
 };
+var getMe = function getMe() {
+  return function (dispatch) {
+    return _utilities_authUtil__WEBPACK_IMPORTED_MODULE_1__["getMe"]().then(function (res) {
+      var token = localStorage.getItem('token');
+      var friends = res.data.friends;
+      var user = res.data;
+      var conversations = res.data.conversations;
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("friends", JSON.stringify(friends));
+      localStorage.setItem("conversations", JSON.stringify(conversations));
+      dispatch(loginSuccess({
+        token: token,
+        friends: friends,
+        user: user,
+        conversations: conversations
+      }));
+    })["catch"](function (err) {
+      dispatch(logout);
+    });
+  };
+};
 
 /***/ }),
 
@@ -269,13 +298,17 @@ var addOrg = function addOrg(org) {
 /*!*****************************************!*\
   !*** ./frontend/actions/chatActions.js ***!
   \*****************************************/
-/*! exports provided: sendMessageSuccess, makeConversation, getAllMessages, sendMessage */
+/*! exports provided: sendMessageSuccess, setCurrentConvo, checkCurrentConvo, clearConvo, makeConversation, deleteConversation, getAllMessages, sendMessage */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "sendMessageSuccess", function() { return sendMessageSuccess; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setCurrentConvo", function() { return setCurrentConvo; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "checkCurrentConvo", function() { return checkCurrentConvo; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "clearConvo", function() { return clearConvo; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "makeConversation", function() { return makeConversation; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "deleteConversation", function() { return deleteConversation; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getAllMessages", function() { return getAllMessages; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "sendMessage", function() { return sendMessage; });
 /* harmony import */ var _types__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./types */ "./frontend/actions/types.js");
@@ -299,16 +332,61 @@ var getAllMessagesSuccess = function getAllMessagesSuccess(payload) {
   };
 };
 
+var setCurrentConvoAction = function setCurrentConvoAction(payload) {
+  return {
+    type: _types__WEBPACK_IMPORTED_MODULE_0__["SET_CURRENT_CONVO"],
+    payload: payload
+  };
+};
+
+var clearConvoAction = function clearConvoAction() {
+  return {
+    type: _types__WEBPACK_IMPORTED_MODULE_0__["CLEAR_CONVO"]
+  };
+};
+
 var sendMessageSuccess = function sendMessageSuccess(payload) {
   return {
     type: _types__WEBPACK_IMPORTED_MODULE_0__["SEND_MESSAGE_SUCCESS"],
     payload: payload
   };
 };
+var setCurrentConvo = function setCurrentConvo(convo) {
+  return function (dispatch) {
+    localStorage.setItem("currentConvo", JSON.stringify(convo));
+    dispatch(setCurrentConvoAction(convo));
+  };
+};
+var checkCurrentConvo = function checkCurrentConvo() {
+  return function (dispatch) {
+    var currentConvo = JSON.parse(localStorage.getItem("currentConvo"));
+    dispatch(setCurrentConvoAction(currentConvo));
+  };
+};
+var clearConvo = function clearConvo() {
+  return function (dispatch) {
+    localStorage.removeItem("currentConvo");
+    dispatch(clearConvoAction());
+  };
+};
 var makeConversation = function makeConversation(id) {
   return function (dispatch) {
     return _utilities_chatUtil__WEBPACK_IMPORTED_MODULE_1__["makeAConversation"](id).then(function (res) {
-      dispatch(makeConvoSuccess(res.data));
+      if (res.data) {
+        var conversations = JSON.parse(localStorage.getItem("conversations"));
+        conversations.push(res.data);
+        localStorage.setItem("conversations", JSON.stringify(conversations));
+        dispatch(makeConvoSuccess(res.data));
+      }
+    })["catch"](function (err) {
+      return dispatch(_authActions__WEBPACK_IMPORTED_MODULE_2__["logout"]());
+    });
+  };
+};
+var deleteConversation = function deleteConversation(id) {
+  return function (dispatch) {
+    return _utilities_chatUtil__WEBPACK_IMPORTED_MODULE_1__["deleteConversation"](id).then(function (res) {
+      dispatch(_authActions__WEBPACK_IMPORTED_MODULE_2__["getMe"]());
     })["catch"](function (err) {
       return dispatch(_authActions__WEBPACK_IMPORTED_MODULE_2__["logout"]());
     });
@@ -424,16 +502,10 @@ var getNotifications = function getNotifications(data) {
 var respondFriendRequest = function respondFriendRequest(data) {
   return function (dispatch) {
     return _utilities_notificationsUtil__WEBPACK_IMPORTED_MODULE_1__["respondFriendRequest"](data).then(function (res) {
-      if (data["accepted"]) {
-        dispatch(addFriendSuccess(res.data["new_friend"]));
-        var friends = JSON.parse(localStorage.getItem("friends"));
-        friends.push(res.data["new_friend"]);
-        localStorage.setItem("friends", JSON.stringify(friends));
-      }
-
       dispatch(respondFriendRequestSuccess(res.data));
+      dispatch(_authActions__WEBPACK_IMPORTED_MODULE_2__["getMe"]());
     })["catch"](function (err) {
-      return dispatch(_authActions__WEBPACK_IMPORTED_MODULE_2__["logout"]());
+      dispatch(_authActions__WEBPACK_IMPORTED_MODULE_2__["logout"]());
     });
   };
 };
@@ -553,8 +625,10 @@ var sendOrgInvite = function sendOrgInvite(id) {
 };
 var sendFriendRequest = function sendFriendRequest(id) {
   return function (dispatch) {
-    return _utilities_profileUtil__WEBPACK_IMPORTED_MODULE_0__["sendFriendInvite"](id).then(function () {
-      dispatch(sentFriendRequestSuccess());
+    return _utilities_profileUtil__WEBPACK_IMPORTED_MODULE_0__["sendFriendInvite"](id).then(function (res) {
+      if (res.data) {
+        dispatch(sentFriendRequestSuccess());
+      }
     })["catch"](function (err) {
       return dispatch(_authActions__WEBPACK_IMPORTED_MODULE_1__["logout"]());
     });
@@ -563,24 +637,8 @@ var sendFriendRequest = function sendFriendRequest(id) {
 var removeFriend = function removeFriend(id) {
   return function (dispatch) {
     return _utilities_profileUtil__WEBPACK_IMPORTED_MODULE_0__["removeFriend"](id).then(function (res) {
-      var friends = JSON.parse(localStorage.getItem("friends"));
-      var idx;
-
-      for (var i in friends) {
-        var current = friends[i];
-
-        if (current == id) {
-          idx = parseInt(i);
-          break;
-        }
-      }
-
-      if (idx) {
-        friends.splice(idx, 1);
-      }
-
-      localStorage.setItem("friends", JSON.stringify(friends));
-      dispatch(updateSuccess(res.data));
+      dispatch(removeFriendSuccess(id));
+      dispatch(_authActions__WEBPACK_IMPORTED_MODULE_1__["getMe"]());
     })["catch"](function (err) {
       return dispatch(_authActions__WEBPACK_IMPORTED_MODULE_1__["logout"]());
     });
@@ -673,7 +731,7 @@ var clearOut = function clearOut() {
 /*!***********************************!*\
   !*** ./frontend/actions/types.js ***!
   \***********************************/
-/*! exports provided: LOGIN_SUCCESS, LOGIN_FAILURE, SIGNUP_SUCCESS, SIGNUP_FAILURE, LOGOUT_FAILURE, LOGOUT_SUCCESS, GETALL_TASKS_SUCCESS, GETALL_TASKS_FAILURE, DEL_TASK_SUCCESS, UPDATE_TASK_SUCCESS, MAKE_TASK_SUCCESS, MAKE_TASK_FAILURE, SEARCH_SUCCESS, GET_PROFILE_SUCCESS, SENT_ORG_INVITE_SUCCESS, SENT_FRIEND_REQUEST_SUCCESS, REMOVE_FRIEND_SUCCESS, REMOVE_MEMBER_SUCCESS, UPDATE_CURRENT_ORG_SUCCESS, ADD_ORG_SUCCESS, RESPOND_ORG_INVITE_SUCCESS, RESPOND_FRIEND_REQUEST_SUCCESS, REMOVE_ORG_NOTIFICATIONS_SUCCESS, REMOVE_FRIEND_NOTIFICATIONS_SUCCESS, GET_NOTIFICATIONS_SUCCESS, CLEAR_OUT_MEMBERS_SUCCESS, MAKE_ADMIN_SUCCESS, ADD_FRIEND_SUCCESS, UPDATE_SUCCESS, MAKE_CONVO_SUCCESS, GET_ALL_MESSAGES_SUCCESS, SEND_MESSAGE_SUCCESS */
+/*! exports provided: LOGIN_SUCCESS, LOGIN_FAILURE, SIGNUP_SUCCESS, SIGNUP_FAILURE, LOGOUT_FAILURE, LOGOUT_SUCCESS, GETALL_TASKS_SUCCESS, GETALL_TASKS_FAILURE, DEL_TASK_SUCCESS, UPDATE_TASK_SUCCESS, MAKE_TASK_SUCCESS, MAKE_TASK_FAILURE, SEARCH_SUCCESS, GET_PROFILE_SUCCESS, SENT_ORG_INVITE_SUCCESS, SENT_FRIEND_REQUEST_SUCCESS, REMOVE_FRIEND_SUCCESS, REMOVE_MEMBER_SUCCESS, UPDATE_CURRENT_ORG_SUCCESS, ADD_ORG_SUCCESS, RESPOND_ORG_INVITE_SUCCESS, RESPOND_FRIEND_REQUEST_SUCCESS, REMOVE_ORG_NOTIFICATIONS_SUCCESS, REMOVE_FRIEND_NOTIFICATIONS_SUCCESS, GET_NOTIFICATIONS_SUCCESS, CLEAR_OUT_MEMBERS_SUCCESS, MAKE_ADMIN_SUCCESS, ADD_FRIEND_SUCCESS, UPDATE_SUCCESS, MAKE_CONVO_SUCCESS, GET_ALL_MESSAGES_SUCCESS, SEND_MESSAGE_SUCCESS, SET_CURRENT_CONVO, CLEAR_CONVO */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -710,6 +768,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "MAKE_CONVO_SUCCESS", function() { return MAKE_CONVO_SUCCESS; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GET_ALL_MESSAGES_SUCCESS", function() { return GET_ALL_MESSAGES_SUCCESS; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "SEND_MESSAGE_SUCCESS", function() { return SEND_MESSAGE_SUCCESS; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "SET_CURRENT_CONVO", function() { return SET_CURRENT_CONVO; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CLEAR_CONVO", function() { return CLEAR_CONVO; });
 var LOGIN_SUCCESS = "LOGIN_SUCCESS";
 var LOGIN_FAILURE = "LOGIN_FAILURE";
 var SIGNUP_SUCCESS = "SIGNUP_SUCCESS";
@@ -742,6 +802,8 @@ var UPDATE_SUCCESS = "UPDATE_SUCCESS";
 var MAKE_CONVO_SUCCESS = "MAKE_CONVO_SUCCESS";
 var GET_ALL_MESSAGES_SUCCESS = "GET_ALL_MESSAGES_SUCCESS";
 var SEND_MESSAGE_SUCCESS = "SEND_MESSAGE_SUCCESS";
+var SET_CURRENT_CONVO = "SET_CURRENT_CONVO";
+var CLEAR_CONVO = "CLEAR_CONVO";
 
 /***/ }),
 
@@ -790,6 +852,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _profile_profileContainer__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../profile/profileContainer */ "./frontend/components/profile/profileContainer.js");
 /* harmony import */ var _chat_chatContainer__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../chat/chatContainer */ "./frontend/components/chat/chatContainer.js");
 /* harmony import */ var _nav_navBarContainer__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../nav/navBarContainer */ "./frontend/components/nav/navBarContainer.js");
+/* harmony import */ var socket_io_client__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! socket.io-client */ "./node_modules/socket.io-client/lib/index.js");
+/* harmony import */ var socket_io_client__WEBPACK_IMPORTED_MODULE_9___default = /*#__PURE__*/__webpack_require__.n(socket_io_client__WEBPACK_IMPORTED_MODULE_9__);
+/* harmony import */ var _chat_peerUtil__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../chat/peerUtil */ "./frontend/components/chat/peerUtil.js");
+/* harmony import */ var _chat_videoChat__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../chat/videoChat */ "./frontend/components/chat/videoChat.jsx");
+/* harmony import */ var _ringer__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./ringer */ "./frontend/components/app/ringer.jsx");
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -800,14 +867,15 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
-function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
-
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 
 
@@ -817,21 +885,232 @@ function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || func
 
 
 
+
+
+
+
+
+var socket = socket_io_client__WEBPACK_IMPORTED_MODULE_9___default()();
 var App =
 /*#__PURE__*/
 function (_Component) {
   _inherits(App, _Component);
 
-  function App() {
+  function App(props) {
+    var _this;
+
     _classCallCheck(this, App);
 
-    return _possibleConstructorReturn(this, _getPrototypeOf(App).apply(this, arguments));
+    _this = _possibleConstructorReturn(this, _getPrototypeOf(App).call(this, props));
+
+    _defineProperty(_assertThisInitialized(_this), "getMyPeer", function () {
+      return _this.myPeer;
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "setPeer", function (id, val) {
+      _this.peers[id] = val;
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "setOtherVid", function (ref) {
+      _this.setState({
+        otherVid: ref
+      });
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "getRinger", function () {
+      var ringer;
+
+      if (_this.state.openRinger) {
+        ringer = react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_ringer__WEBPACK_IMPORTED_MODULE_12__["default"], {
+          answerCall: _this.answerCall,
+          caller: _this.state.caller
+        });
+      } else {
+        ringer = "";
+      }
+
+      return ringer;
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "setUpSocket", function () {
+      socket.on("accept friend request", function (data) {
+        _this.props.getMe();
+      });
+      socket.on("remove friend", function (data) {
+        _this.props.getMe();
+      });
+      socket.on("signal", function (data) {
+        var peer = _this.peers[data.userId];
+
+        if (peer) {
+          peer.signal(data.info);
+          return;
+        }
+
+        if (_this.state.onCall) {
+          socket.emit("reject call", {
+            id: data.userId
+          });
+          return;
+        }
+
+        _this.setState({
+          onCall: true
+        });
+
+        if (peer === undefined) {
+          _this.setRinger(data.username, true).then(function (promise) {
+            clearInterval(promise.interval);
+            clearTimeout(promise.timer);
+
+            _this.setState({
+              answered: null
+            });
+
+            _chat_peerUtil__WEBPACK_IMPORTED_MODULE_10__["getUserMedia"]().then(function (stream) {
+              _this.stream = stream;
+
+              _this.setState({
+                calling: true,
+                incoming: true,
+                onCall: true
+              });
+
+              _this.otherVidId = data.userId;
+              peer = _chat_peerUtil__WEBPACK_IMPORTED_MODULE_10__["createPeer"](data.userId, false, _this.stream, _this.state.otherVid, _this.setPeer, _this.props.me._id, socket);
+              _this.myPeer = peer;
+              _this.peers[data.userId] = peer;
+              peer.signal(data.info);
+            });
+          })["catch"](function (promise) {
+            clearInterval(promise.interval);
+            clearTimeout(promise.timer);
+
+            _this.setState({
+              answered: null,
+              onCall: false,
+              openRinger: false
+            });
+
+            socket.emit("reject call", {
+              id: data.userId
+            });
+          });
+        }
+      });
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "setRinger", function (name, val) {
+      _this.setState({
+        caller: name,
+        openRinger: val
+      });
+
+      return new Promise(function (resolve, reject) {
+        var timer;
+        var interval = setInterval(function () {
+          if (_this.state.answered) {
+            resolve({
+              interval: interval,
+              timer: timer
+            });
+          } else if (_this.state.answered === false) {
+            reject({
+              timer: timer,
+              interval: interval
+            });
+          }
+        }, 10);
+        timer = setTimeout(function () {
+          reject({
+            timer: timer,
+            interval: interval
+          });
+        }, 60000);
+      });
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "getVideo", function () {
+      var video;
+
+      if (_this.state.calling) {
+        video = react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_chat_videoChat__WEBPACK_IMPORTED_MODULE_11__["default"], {
+          socket: socket,
+          stream: _this.stream,
+          otherId: _this.state.otherId,
+          setPeer: _this.setPeer,
+          id: _this.props.me._id,
+          setOtherVid: _this.setOtherVid,
+          incoming: _this.state.incoming,
+          getPeer: _this.getMyPeer,
+          turnOffVideo: _this.turnOffVideo,
+          setOnCall: _this.setOnCall,
+          otherVidId: _this.otherVidId
+        });
+      } else {
+        video = "";
+      }
+
+      return video;
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "answerCall", function (val) {
+      _this.setState({
+        answered: val,
+        openRinger: false
+      });
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "turnOffVideo", function () {
+      _this.setState({
+        incoming: false,
+        calling: false
+      });
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "setOnCall", function (val) {
+      _this.setState({
+        onCall: val
+      });
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "joinVideoChannel", function () {
+      if (_this.props.isAuthenticated) {
+        socket.emit("join video channel", {
+          id: _this.props.me._id
+        });
+        socket.emit("join notification channel", {
+          id: _this.props.me._id
+        });
+      }
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "getOnCall", function () {
+      return _this.state.onCall;
+    });
+
+    _this.state = {
+      openRinger: false,
+      onCall: false,
+      answered: null,
+      caller: null,
+      incoming: false,
+      otherVid: null,
+      calling: false
+    };
+    _this.peers = {};
+    _this.stream = null;
+
+    _this.setUpSocket();
+
+    return _this;
   }
 
   _createClass(App, [{
     key: "componentWillMount",
     value: function componentWillMount() {
       this.props.checkAuthState();
+      this.props.checkCurrentConvo();
     }
   }, {
     key: "showNavBar",
@@ -840,6 +1119,7 @@ function (_Component) {
 
       if (this.props.isAuthenticated) {
         nav = react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_nav_navBarContainer__WEBPACK_IMPORTED_MODULE_8__["default"], {
+          socket: socket,
           history: this.props.history
         });
       } else {
@@ -852,7 +1132,12 @@ function (_Component) {
     key: "render",
     value: function render() {
       var nav = this.showNavBar();
-      return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", null, nav, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_1__["Switch"], null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_utilities_nonPrivateRoute__WEBPACK_IMPORTED_MODULE_4__["default"], {
+      var ringer = this.getRinger();
+      var video = this.getVideo();
+      this.joinVideoChannel();
+      return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "position-relative"
+      }, nav, ringer, video, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_1__["Switch"], null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_utilities_nonPrivateRoute__WEBPACK_IMPORTED_MODULE_4__["default"], {
         exact: true,
         path: "/",
         component: _home_homeContainer__WEBPACK_IMPORTED_MODULE_2__["default"],
@@ -868,11 +1153,19 @@ function (_Component) {
       }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_utilities_privateRoute__WEBPACK_IMPORTED_MODULE_5__["default"], {
         path: "/chat",
         component: _chat_chatContainer__WEBPACK_IMPORTED_MODULE_7__["default"],
-        isAuthenticated: this.props.isAuthenticated
+        isAuthenticated: this.props.isAuthenticated,
+        socket: socket,
+        setOnCall: this.setOnCall,
+        setPeer: this.setPeer,
+        otherVidId: this.otherVidId,
+        setOtherVid: this.setOtherVid,
+        getOnCall: this.getOnCall,
+        onCall: this.state.onCall
       }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_utilities_privateRoute__WEBPACK_IMPORTED_MODULE_5__["default"], {
         path: "/users/:id",
         component: _profile_profileContainer__WEBPACK_IMPORTED_MODULE_6__["default"],
-        isAuthenticated: this.props.isAuthenticated
+        isAuthenticated: this.props.isAuthenticated,
+        socket: socket
       })));
     }
   }]);
@@ -895,6 +1188,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
 /* harmony import */ var _App__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./App */ "./frontend/components/app/App.jsx");
 /* harmony import */ var _actions_authActions__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../actions/authActions */ "./frontend/actions/authActions.js");
+/* harmony import */ var _actions_chatActions__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../actions/chatActions */ "./frontend/actions/chatActions.js");
+
 
 
 
@@ -902,6 +1197,7 @@ __webpack_require__.r(__webpack_exports__);
 var mapStateToProps = function mapStateToProps(state) {
   return {
     coin: state.auth,
+    me: state.auth.user,
     isAuthenticated: state.auth.token !== null
   };
 };
@@ -910,11 +1206,50 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
   return {
     checkAuthState: function checkAuthState() {
       dispatch(_actions_authActions__WEBPACK_IMPORTED_MODULE_2__["checkAuthState"]());
+    },
+    checkCurrentConvo: function checkCurrentConvo() {
+      dispatch(Object(_actions_chatActions__WEBPACK_IMPORTED_MODULE_3__["checkCurrentConvo"])());
+    },
+    getMe: function getMe() {
+      return dispatch(_actions_authActions__WEBPACK_IMPORTED_MODULE_2__["getMe"]());
     }
   };
 };
 
 /* harmony default export */ __webpack_exports__["default"] = (Object(react_redux__WEBPACK_IMPORTED_MODULE_0__["connect"])(mapStateToProps, mapDispatchToProps)(_App__WEBPACK_IMPORTED_MODULE_1__["default"]));
+
+/***/ }),
+
+/***/ "./frontend/components/app/ringer.jsx":
+/*!********************************************!*\
+  !*** ./frontend/components/app/ringer.jsx ***!
+  \********************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return ringer; });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+
+function ringer(_ref) {
+  var answerCall = _ref.answerCall,
+      caller = _ref.caller;
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+    className: "ringer rounded shadow-lg"
+  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h3", null, caller, " is calling"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
+    onClick: function onClick() {
+      return answerCall(true);
+    },
+    className: "btn btn-sm mr-2 btn-success"
+  }, "Answer"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
+    onClick: function onClick() {
+      return answerCall(false);
+    },
+    className: "btn btn-sm btn-danger"
+  }, "Decline")));
+}
 
 /***/ }),
 
@@ -968,7 +1303,9 @@ function (_Component) {
 
     _defineProperty(_assertThisInitialized(_this), "handleSubmit", function (e) {
       e.preventDefault();
-      var user = Object.assign({}, _this.state);
+      var user = Object.assign({}, _this.state, {
+        username: _this.state.username.trim()
+      });
 
       _this.props.process(user);
     });
@@ -988,9 +1325,13 @@ function (_Component) {
         }, "Sign Up"));
       }
 
+      var homeLink = react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_1__["Link"], {
+        to: "/"
+      }, "Home");
       return {
         emailTop: emailTop,
-        bottomLink: bottomLink
+        bottomLink: bottomLink,
+        homeLink: homeLink
       };
     });
 
@@ -1025,7 +1366,8 @@ function (_Component) {
     value: function render() {
       var _this$getLinks = this.getLinks(),
           emailTop = _this$getLinks.emailTop,
-          bottomLink = _this$getLinks.bottomLink;
+          bottomLink = _this$getLinks.bottomLink,
+          homeLink = _this$getLinks.homeLink;
 
       return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
         className: "h-100"
@@ -1061,7 +1403,7 @@ function (_Component) {
       })), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
         className: "btn btn-primary mb-2",
         type: "submit"
-      }), bottomLink)));
+      }), bottomLink, homeLink)));
     }
   }]);
 
@@ -1128,12 +1470,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var mongoose__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! mongoose */ "./node_modules/mongoose/browser.js");
 /* harmony import */ var mongoose__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(mongoose__WEBPACK_IMPORTED_MODULE_1__);
-/* harmony import */ var socket_io_client__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! socket.io-client */ "./node_modules/socket.io-client/lib/index.js");
-/* harmony import */ var socket_io_client__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(socket_io_client__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _videoChat__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./videoChat */ "./frontend/components/chat/videoChat.jsx");
-/* harmony import */ var simple_peer__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! simple-peer */ "./node_modules/simple-peer/index.js");
-/* harmony import */ var simple_peer__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(simple_peer__WEBPACK_IMPORTED_MODULE_4__);
-/* harmony import */ var _peerUtil__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./peerUtil */ "./frontend/components/chat/peerUtil.js");
+/* harmony import */ var _videoChat__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./videoChat */ "./frontend/components/chat/videoChat.jsx");
+/* harmony import */ var simple_peer__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! simple-peer */ "./node_modules/simple-peer/index.js");
+/* harmony import */ var simple_peer__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(simple_peer__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _peerUtil__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./peerUtil */ "./frontend/components/chat/peerUtil.js");
+/* harmony import */ var _babel_types__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @babel/types */ "./node_modules/@babel/types/lib/index.js");
+/* harmony import */ var _babel_types__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(_babel_types__WEBPACK_IMPORTED_MODULE_5__);
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -1160,7 +1502,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 
 
-var socket = socket_io_client__WEBPACK_IMPORTED_MODULE_2___default()();
 var Chat =
 /*#__PURE__*/
 function (_Component) {
@@ -1173,6 +1514,56 @@ function (_Component) {
 
     _this = _possibleConstructorReturn(this, _getPrototypeOf(Chat).call(this, props));
 
+    _defineProperty(_assertThisInitialized(_this), "checkFor", function (data) {
+      return new Promise(function (resolve, reject) {
+        var _iteratorNormalCompletion = true;
+        var _didIteratorError = false;
+        var _iteratorError = undefined;
+
+        try {
+          for (var _iterator = _this.props.conversations[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+            var convo = _step.value;
+
+            if (data.conversation == convo._id) {
+              resolve();
+            }
+          }
+        } catch (err) {
+          _didIteratorError = true;
+          _iteratorError = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion && _iterator["return"] != null) {
+              _iterator["return"]();
+            }
+          } finally {
+            if (_didIteratorError) {
+              throw _iteratorError;
+            }
+          }
+        }
+
+        _this.props.getMe().then(function (res) {
+          resolve();
+        })["catch"](function () {
+          return reject();
+        });
+      });
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "setNotifications", function (convo, val) {
+      _this.state.notifications[convo] = val;
+      var newState = _this.state.notifications;
+
+      _this.setState({
+        notifications: newState
+      });
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "setLastConvo", function () {
+      _this.setConvo(_this.props.conversations[_this.props.conversations.length - 1])();
+    });
+
     _defineProperty(_assertThisInitialized(_this), "setPeer", function (id, val) {
       _this.peers[id] = val;
     });
@@ -1183,101 +1574,16 @@ function (_Component) {
       });
     });
 
-    _defineProperty(_assertThisInitialized(_this), "setUpSocket", function () {
-      socket.on("signal", function (data) {
-        var peer = _this.peers[data.userId];
-        console.log("signal i got ", peer);
-
-        if (peer) {
-          console.log("back in here");
-          peer.signal(data.info);
-        }
-
-        if (_this.state.oncall) {
-          socket.emit("reject call", {
-            id: data.userId
-          });
-          return;
-        }
-
-        if (peer === undefined) {
-          _this.setRinger(data.username, true).then(function (promise) {
-            clearInterval(promise.interval);
-            clearTimeout(promise.timer);
-
-            _this.setState({
-              answered: null
-            });
-
-            _peerUtil__WEBPACK_IMPORTED_MODULE_5__["getUserMedia"]().then(function (stream) {
-              _this.stream = stream;
-
-              _this.setState({
-                calling: true,
-                incoming: true,
-                onCall: true
-              });
-
-              _this.otherVidId = data.userId;
-              peer = _peerUtil__WEBPACK_IMPORTED_MODULE_5__["createPeer"](data.userId, false, _this.stream, _this.state.otherVid, _this.setPeer, _this.props.me._id, socket);
-              _this.myPeer = peer;
-              _this.peers[data.userId] = peer;
-              peer.signal(data.info);
-            });
-          })["catch"](function (promise) {
-            clearInterval(promise.interval);
-            clearTimeout(promise.timer);
-
-            _this.setState({
-              answered: null,
-              onCall: false
-            });
-
-            socket.emit('reject call', {
-              id: data.userId
-            });
-          });
-        }
-      });
-    });
-
     _defineProperty(_assertThisInitialized(_this), "getMyPeer", function () {
       return _this.myPeer;
     });
 
-    _defineProperty(_assertThisInitialized(_this), "setRinger", function (name, val) {
-      _this.setState({
-        caller: name,
-        openRinger: val
-      });
-
-      return new Promise(function (resolve, reject) {
-        var timer;
-        var interval = setInterval(function () {
-          if (_this.state.answered) {
-            resolve({
-              interval: interval,
-              timer: timer
-            });
-          } else if (_this.state.answered === false) {
-            reject({
-              timer: timer,
-              interval: interval
-            });
-          }
-        }, 10);
-        timer = setTimeout(function () {
-          reject({
-            timer: timer,
-            interval: interval
-          });
-        }, 60000);
-      });
-    });
-
     _defineProperty(_assertThisInitialized(_this), "process", function () {
+      _this.friendsObj.length = 0;
+
       _this.props.friends.forEach(function (el) {
         _this.friendsObj[el._id] = el.username;
+        _this.friendsObj.length += 1;
       });
     });
 
@@ -1293,17 +1599,43 @@ function (_Component) {
       });
     });
 
-    _defineProperty(_assertThisInitialized(_this), "handleSubmit", function () {
+    _defineProperty(_assertThisInitialized(_this), "enterKeySubmit", function (e) {
+      if (e.keyCode == 13) {
+        _this.handleSubmit(e);
+      }
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "getSplash", function () {
+      var img = "";
+
+      if (!_this.state.currentConvo) {
+        img = react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("img", {
+          className: "splash-screen",
+          src: "../images/new_cover.png"
+        });
+      }
+
+      return img;
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "handleSubmit", function (e) {
       if (_this.state.currentConvo) {
         _this.props.sendMessage({
           text: _this.state.text,
           receiver: _this.state.currentConvo.other,
           conversation: _this.state.currentConvo._id
         }).then(function (res) {
-          socket.emit("send message", {
+          _this.props.socket.emit("send message", {
             conversation: _this.state.currentConvo._id,
-            message: res.payload
+            message: res.payload,
+            sender: _this.props.me._id
           });
+
+          _this.setState({
+            text: ""
+          });
+
+          _this.scrollToBottom();
         });
       }
     });
@@ -1312,14 +1644,28 @@ function (_Component) {
       var other = convo.target != _this.props.me._id ? convo.target : convo.starter;
       var obj = {
         _id: convo._id,
-        other: other
+        other: other,
+        target: convo.target,
+        starter: convo.starter
       };
       return function (e) {
-        socket.emit("join conversation", {
+        if (_this.state.currentConvo) {
+          _this.props.socket.emit("leave conversation", {
+            conversation: _this.state.currentConvo._id
+          });
+        }
+
+        _this.setNotifications(convo._id, false);
+
+        _this.props.socket.emit("join conversation", {
           conversation: convo._id
         });
 
-        _this.props.getAllMessages(convo._id);
+        _this.props.setCurrentConvo(obj);
+
+        _this.props.getAllMessages(convo._id).then(function () {
+          _this.scrollToBottom();
+        });
 
         _this.setState({
           currentConvo: obj,
@@ -1340,37 +1686,6 @@ function (_Component) {
       return true;
     });
 
-    _defineProperty(_assertThisInitialized(_this), "answerCall", function (val) {
-      _this.setState({
-        answered: val,
-        openRinger: false
-      });
-    });
-
-    _defineProperty(_assertThisInitialized(_this), "getRinger", function () {
-      var ringer;
-
-      if (_this.state.openRinger) {
-        ringer = react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-          className: "card"
-        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
-          onClick: function onClick() {
-            return _this.answerCall(true);
-          },
-          className: "btn btn-md btn-success"
-        }, "Answer"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
-          onClick: function onClick() {
-            return _this.answerCall(false);
-          },
-          className: "btn btn-md btn-warning"
-        }, "Decline"));
-      } else {
-        ringer = "";
-      }
-
-      return ringer;
-    });
-
     _defineProperty(_assertThisInitialized(_this), "turnOffVideo", function () {
       _this.setState({
         incoming: false,
@@ -1382,45 +1697,104 @@ function (_Component) {
       var video;
 
       if (_this.state.calling) {
-        video = react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_videoChat__WEBPACK_IMPORTED_MODULE_3__["default"], {
-          socket: socket,
+        video = react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_videoChat__WEBPACK_IMPORTED_MODULE_2__["default"], {
+          socket: _this.props.socket,
           stream: _this.stream,
           otherId: _this.state.otherId,
-          setPeer: _this.setPeer,
+          setPeer: _this.props.setPeer,
           id: _this.props.me._id,
-          setOtherVid: _this.setOtherVid,
+          username: _this.props.me.username,
+          setOtherVid: _this.props.setOtherVid,
           incoming: _this.state.incoming,
           getPeer: _this.getMyPeer,
           turnOffVideo: _this.turnOffVideo,
-          setOnCall: _this.setOnCall,
+          setOnCall: _this.props.setOnCall,
           otherVidId: _this.otherVidId
         });
       } else {
         video = "";
       }
 
-      return {
-        video: video
-      };
+      return video;
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "setInputBtn", function () {
+      var bottomInputGroup = "";
+
+      if (_this.state.currentConvo) {
+        bottomInputGroup = react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+          className: "bottom-input input-group"
+        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
+          onChange: _this.handleChange,
+          type: "text",
+          className: "form-control",
+          value: _this.state.text,
+          onKeyDown: _this.enterKeySubmit
+        }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+          className: "input-group-append"
+        }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("span", {
+          onClick: _this.handleSubmit,
+          className: "clickable input-group-text",
+          id: "basic-addon2"
+        }, "Send")));
+      }
+
+      return bottomInputGroup;
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "scrollToBottom", function () {
+      var height = _this.refs.messages.scrollHeight;
+      _this.refs.messages.scrollTop = height;
     });
 
     _defineProperty(_assertThisInitialized(_this), "getCallBtn", function () {
-      if (_this.state.currentConvo) {
+      if (_this.state.currentConvo && !_this.props.onCall) {
         return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
+          className: "rounded-pill btn-outline-success call-btn p-3 shadow-lg",
           onClick: function onClick() {
             _this.setState({
               calling: true
             });
           }
-        });
+        }, "Call");
       } else {
         return "";
       }
     });
 
-    _this.friendsObj = {};
+    _defineProperty(_assertThisInitialized(_this), "deleteFriend", function (person) {
+      return function (e) {
+        e.stopPropagation();
+
+        _this.props.deleteFriend(person._id);
+      };
+    });
+
+    _defineProperty(_assertThisInitialized(_this), "deleteConversation", function (convo) {
+      return function (e) {
+        e.stopPropagation();
+
+        if (_this.state.currentConvo._id == convo._id) {
+          _this.setState({
+            currentConvo: null
+          });
+
+          _this.props.socket.emit("leave conversation", {
+            conversation: _this.state.currentConvo._id
+          });
+
+          _this.props.setCurrentConvo(null);
+        }
+
+        _this.props.deleteConversation(convo._id);
+      };
+    });
+
+    _this.friendsObj = {
+      length: 0
+    };
     _this.state = {
-      currentConvo: null,
+      currentConvo: _this.props.currentConvo,
       text: "",
       calling: false,
       otherId: null,
@@ -1429,80 +1803,114 @@ function (_Component) {
       openRinger: false,
       answered: null,
       caller: null,
-      onCall: false
+      onCall: false,
+      notifications: {}
     };
     _this.friendsObj[_this.props.me._id] = "Me";
     _this.stream = null;
 
     _this.process();
 
-    _this.peers = {};
-    socket.on("receive message", function (data) {
+    _this.props.socket.on("receive message", function (data) {
       if (_this.state.currentConvo) {
         props.addMessage(data.message);
+
+        _this.scrollToBottom();
       }
     });
-    socket.emit("join video channel", {
-      id: _this.props.me._id
+
+    _this.props.socket.on("receive notification", function (data) {
+      _this.checkFor(data).then(function () {
+        if (!_this.state.currentConvo || data.conversation != _this.state.currentConvo._id) {
+          _this.setNotifications(data.conversation, true);
+        }
+      });
     });
 
-    _this.setUpSocket();
-
+    _this.peers = {};
     return _this;
   }
 
   _createClass(Chat, [{
+    key: "componentWillMount",
+    value: function componentWillMount() {
+      this.props.getMe();
+    }
+  }, {
+    key: "componentDidMount",
+    value: function componentDidMount() {
+      if (this.state.currentConvo) {
+        this.setConvo(this.state.currentConvo)();
+      }
+    }
+  }, {
+    key: "componentWillUpdate",
+    value: function componentWillUpdate() {
+      if (this.props.friends.length > this.friendsObj.length) {
+        var last = this.props.friends.length - 1;
+        var el = this.props.friends[last];
+        this.friendsObj[el._id] = el.username;
+        this.friendsObj.length += 1;
+      }
+    }
+  }, {
     key: "render",
     value: function render() {
       var _this2 = this;
 
-      var _this$getVideo = this.getVideo(),
-          video = _this$getVideo.video;
-
+      var video = this.getVideo();
       var callBtn = this.getCallBtn();
-      var ringer = this.getRinger();
-      return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-        className: "container-fluid max-height"
-      }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-        className: "row max-height"
-      }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-        className: "bg-light col-2 p-0"
-      }, "Conversations", react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("ul", null, this.props.conversations.map(function (convo) {
+      var bottomInputGroup = this.setInputBtn();
+      var splash = this.getSplash();
+      return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("section", {
+        className: "container-fluid p-0 m-0 row max-height"
+      }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("aside", {
+        className: "bg-light border-right col-2 pt-5 p-0",
+        align: "center"
+      }, "Conversations", react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("ul", {
+        className: "mt-3 mb-4 text-secondary"
+      }, this.props.conversations.map(function (convo) {
         return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("li", {
+          className: _this2.state.notifications[convo._id] ? "clickable text-primary" : "clickable",
           key: convo._id,
-          onClick: _this2.setConvo(convo)
-        }, "".concat(_this2.friendsObj[convo.starter], ",").concat(_this2.friendsObj[convo.target]));
-      })), "Friends", react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("ul", null, this.props.friends.filter(function (friend) {
+          onClick: function onClick() {
+            return _this2.setConvo(convo)();
+          }
+        }, "".concat(_this2.friendsObj[convo.starter], ",", " ").concat(_this2.friendsObj[convo.target]), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("span", {
+          onClick: _this2.deleteConversation(convo),
+          className: "close icon mr-2"
+        }, "\xD7"));
+      })), "Friends", react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("ul", {
+        className: "mt-3"
+      }, this.props.friends.filter(function (friend) {
         return _this2.convoFilter(friend);
       }).map(function (person) {
         return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("li", {
+          className: "clickable",
           onClick: function onClick() {
-            return _this2.props.makeConvo(person._id);
+            return _this2.props.makeConvo(person._id).then(function () {
+              _this2.setLastConvo();
+            });
           },
           key: person._id
-        }, person.username);
-      }))), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-        className: "col-10 p-0"
-      }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h1", null, this.state.currentConvo ? this.friendsObj[this.state.currentConvo.other] : "Pick a Convo"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-        className: "max-height"
-      }, this.props.messages.map(function (message, idx) {
+        }, person.username, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("span", {
+          onClick: _this2.deleteFriend(person),
+          className: "close icon mr-2"
+        }, "\xD7"));
+      }))), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("section", {
+        className: "max-height  position-relative col-10 p-0",
+        align: "center"
+      }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h1", {
+        className: " messaging-header position-absolute"
+      }, this.state.currentConvo ? this.friendsObj[this.state.currentConvo.other].charAt(0).toUpperCase() + this.friendsObj[this.state.currentConvo.other].slice(1) : ""), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        ref: "messages",
+        className: "h-100 text-center overflow-auto p-5"
+      }, splash, this.props.messages.map(function (message, idx) {
         return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
           key: idx,
-          className: message.sender == _this2.props.me._id ? "sender" : "receiver"
+          className: message.sender == _this2.props.me._id ? "sender  rounded-pill shadow d-block w-15 p-2 mb-3" : "receiver rounded-pill shadow d-block w-15 p-2 mb-3"
         }, message.text);
-      }), ringer, callBtn, video), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-        className: "input-group"
-      }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
-        onChange: this.handleChange,
-        type: "text",
-        className: "form-control"
-      }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-        className: "input-group-append"
-      }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("span", {
-        onClick: this.handleSubmit,
-        className: "input-group-text",
-        id: "basic-addon2"
-      }, "@example.com"))))));
+      }), callBtn, video), bottomInputGroup));
     }
   }]);
 
@@ -1524,6 +1932,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
 /* harmony import */ var _chat__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./chat */ "./frontend/components/chat/chat.jsx");
 /* harmony import */ var _actions_chatActions__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../actions/chatActions */ "./frontend/actions/chatActions.js");
+/* harmony import */ var _actions_authActions__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../actions/authActions */ "./frontend/actions/authActions.js");
+/* harmony import */ var _actions_profileActions__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../actions/profileActions */ "./frontend/actions/profileActions.js");
+
+
 
 
 
@@ -1533,7 +1945,8 @@ var mapStateToProps = function mapStateToProps(state) {
     me: state.auth.user,
     conversations: state.auth.conversations,
     friends: state.auth.friends,
-    messages: state.chat.messages
+    messages: state.chat.messages,
+    currentConvo: state.chat.currentConvo
   };
 };
 
@@ -1550,6 +1963,18 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
     },
     addMessage: function addMessage(message) {
       return dispatch(_actions_chatActions__WEBPACK_IMPORTED_MODULE_2__["sendMessageSuccess"](message));
+    },
+    setCurrentConvo: function setCurrentConvo(convo) {
+      return dispatch(_actions_chatActions__WEBPACK_IMPORTED_MODULE_2__["setCurrentConvo"](convo));
+    },
+    getMe: function getMe() {
+      return dispatch(_actions_authActions__WEBPACK_IMPORTED_MODULE_3__["getMe"]());
+    },
+    deleteFriend: function deleteFriend(id) {
+      return dispatch(_actions_profileActions__WEBPACK_IMPORTED_MODULE_4__["removeFriend"](id));
+    },
+    deleteConversation: function deleteConversation(id) {
+      return dispatch(_actions_chatActions__WEBPACK_IMPORTED_MODULE_2__["deleteConversation"](id));
     }
   };
 };
@@ -1573,6 +1998,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var simple_peer__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(simple_peer__WEBPACK_IMPORTED_MODULE_0__);
 
 var createPeer = function createPeer(userId, initiator, myStream, video, setPeer, myId, socket) {
+  var username = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : "friend";
   var peer = new simple_peer__WEBPACK_IMPORTED_MODULE_0___default.a({
     initiator: initiator,
     stream: myStream,
@@ -1582,7 +2008,8 @@ var createPeer = function createPeer(userId, initiator, myStream, video, setPeer
     socket.emit("signal", {
       userId: myId,
       info: data,
-      id: userId
+      id: userId,
+      username: username
     });
   });
   peer.on("stream", function (stream) {
@@ -1594,12 +2021,9 @@ var createPeer = function createPeer(userId, initiator, myStream, video, setPeer
       peer.destroy();
     }
 
-    if (initiator) {
-      socket.emit('leave video channel', {
-        id: userId
-      });
-    }
-
+    socket.emit('leave video channel', {
+      id: userId
+    });
     setPeer(userId, undefined);
   });
   return peer;
@@ -1665,8 +2089,6 @@ function (_Component) {
 
     _defineProperty(_assertThisInitialized(_this), "setUpCallSocket", function () {
       _this.props.socket.on("reject call", function () {
-        console.log("yo");
-
         _this.close();
       });
     });
@@ -1674,7 +2096,7 @@ function (_Component) {
     _defineProperty(_assertThisInitialized(_this), "callUser", function () {
       _this.props.setOnCall(true);
 
-      _this.myPeer = _peerUtil__WEBPACK_IMPORTED_MODULE_2__["createPeer"](_this.props.otherId, true, _this.stream, _this.refs.video2, _this.props.setPeer, _this.props.id, _this.props.socket);
+      _this.myPeer = _peerUtil__WEBPACK_IMPORTED_MODULE_2__["createPeer"](_this.props.otherId, true, _this.stream, _this.refs.video2, _this.props.setPeer, _this.props.id, _this.props.socket, _this.props.username);
 
       _this.props.setPeer(_this.props.otherId, _this.myPeer);
     });
@@ -1711,8 +2133,6 @@ function (_Component) {
 
 
         _this.props.stream.getTracks()[0].stop();
-
-        console.log("calling");
       } else {
         if (_this.myPeer) {
           _this.myPeer.destroy();
@@ -1753,11 +2173,16 @@ function (_Component) {
   }, {
     key: "render",
     value: function render() {
-      return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", null, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
+      return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "video-container"
+      }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
+        className: "video-close-btn btn btn-outline-danger",
         onClick: this.close
-      }, "Close"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("video", {
+      }, "Hang Up"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("video", {
+        className: "inner-video",
         ref: "video"
       }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("video", {
+        className: "outer-video",
         ref: "video2"
       }));
     }
@@ -1792,13 +2217,15 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
-function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
-
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 
 
@@ -1808,14 +2235,35 @@ function (_Component) {
   _inherits(Home, _Component);
 
   function Home() {
+    var _getPrototypeOf2;
+
+    var _this;
+
     _classCallCheck(this, Home);
 
-    return _possibleConstructorReturn(this, _getPrototypeOf(Home).apply(this, arguments));
+    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    _this = _possibleConstructorReturn(this, (_getPrototypeOf2 = _getPrototypeOf(Home)).call.apply(_getPrototypeOf2, [this].concat(args)));
+
+    _defineProperty(_assertThisInitialized(_this), "login", function (user) {
+      _this.props.login({
+        username: user,
+        password: "test"
+      }).then(function () {
+        return _this.props.history.push("/chat");
+      });
+    });
+
+    return _this;
   }
 
   _createClass(Home, [{
     key: "render",
     value: function render() {
+      var _this2 = this;
+
       return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
         className: "home-screen"
       }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
@@ -1829,8 +2277,14 @@ function (_Component) {
       }, "Sign Up")), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
         className: "mt-2"
       }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
+        onClick: function onClick() {
+          return _this2.login("guest1");
+        },
         className: "btn btn-outline-success ml-2 mr-2 btn-lg"
       }, "Sign In Guest 1"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
+        onClick: function onClick() {
+          return _this2.login("guest2");
+        },
         className: "btn btn-outline-success btn-lg"
       }, "Sign In Guest 2")));
     }
@@ -1853,6 +2307,8 @@ function (_Component) {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
 /* harmony import */ var _home__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./home */ "./frontend/components/home/home.jsx");
+/* harmony import */ var _actions_authActions__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../actions/authActions */ "./frontend/actions/authActions.js");
+
 
 
 
@@ -1861,7 +2317,11 @@ var mapStateToProps = function mapStateToProps(state) {
 };
 
 var mapDispatchToProps = function mapDispatchToProps(dispatch) {
-  return {};
+  return {
+    login: function login(user) {
+      return dispatch(_actions_authActions__WEBPACK_IMPORTED_MODULE_2__["login"](user));
+    }
+  };
 };
 
 /* harmony default export */ __webpack_exports__["default"] = (Object(react_redux__WEBPACK_IMPORTED_MODULE_0__["connect"])(mapStateToProps, mapDispatchToProps)(_home__WEBPACK_IMPORTED_MODULE_1__["default"]));
@@ -1900,6 +2360,8 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 
 
 
@@ -1914,6 +2376,15 @@ function (_Component) {
     _classCallCheck(this, NavBar);
 
     _this = _possibleConstructorReturn(this, _getPrototypeOf(NavBar).call(this, props));
+
+    _defineProperty(_assertThisInitialized(_this), "goToChat", function () {
+      _this.props.history.push("/chat");
+
+      _this.setState({
+        menu: false
+      });
+    });
+
     _this.search = _this.search.bind(_assertThisInitialized(_this));
     _this.goToProfile = _this.goToProfile.bind(_assertThisInitialized(_this));
     _this.logout = _this.logout.bind(_assertThisInitialized(_this));
@@ -1923,10 +2394,20 @@ function (_Component) {
       friendRequests: [],
       acceptedFriendRequests: [],
       seen: false,
-      menu: false
+      menu: false,
+      searchText: ""
     };
     _this.openNotificationsList = _this.openNotificationsList.bind(_assertThisInitialized(_this));
     _this.toggleMenu = _this.toggleMenu.bind(_assertThisInitialized(_this));
+
+    _this.props.socket.on("receive friend request", function (data) {
+      _this.props.getNotifications().then(function (res) {
+        _this.setState({
+          friendRequests: _this.props.notifications.friendRequests
+        });
+      });
+    });
+
     return _this;
   }
 
@@ -1938,7 +2419,11 @@ function (_Component) {
       return function (e) {
         var val = e.target.value;
 
-        if (val.match(/^[a-zA-Z]+$/)) {
+        _this2.setState({
+          searchText: val
+        });
+
+        if (val.match(/^[a-zA-Z0-9]+$/)) {
           _this2.props.search(val).then(function () {
             _this2.setState({
               filteredMembers: _this2.props.filteredMembers
@@ -1981,12 +2466,17 @@ function (_Component) {
       var _this4 = this;
 
       return function (e) {
+        _this4.setState({
+          searchText: ""
+        });
+
         _this4.props.history.push("/users/".concat(id));
 
         _this4.props.clearOutSearch();
 
         _this4.setState({
-          filteredMembers: []
+          filteredMembers: [],
+          menu: false
         });
       };
     }
@@ -2006,23 +2496,28 @@ function (_Component) {
           className: "list-group pop position-absolute"
         }, this.state.friendRequests.map(function (invite) {
           return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("li", {
-            className: "list-group-item"
-          }, invite.inviter.username, " wants to be friends", " ", react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
+            key: invite._id,
+            className: "list-group-item notifications"
+          }, invite.inviter.username, " wants to be friends", " ", react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("span", {
             onClick: function onClick() {
-              return _this5.props.respondFriendRequest({
+              _this5.props.respondFriendRequest({
                 id: invite._id,
                 accepted: true
+              }).then(function () {
+                _this5.props.socket.emit('accept friend request', {
+                  id: invite.inviter._id
+                });
               });
             },
-            className: "btn btn-success"
-          }, "Accept"), " ", react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
+            className: "text-success"
+          }, "Accept"), " ", react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("span", {
             onClick: function onClick() {
               return _this5.props.respondFriendRequest({
                 id: invite._id,
                 accepted: false
               });
             },
-            className: "btn btn-danger"
+            className: "text-danger"
           }, "Reject"), " ");
         }), this.state.acceptedFriendRequests.map(function (invite) {
           return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("li", {
@@ -2040,6 +2535,7 @@ function (_Component) {
     value: function logout() {
       this.props.clearOutSearch();
       this.props.logout();
+      this.props.clearConvo();
       this.props.history.push("/");
     }
   }, {
@@ -2051,6 +2547,9 @@ function (_Component) {
         menu = react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("ul", {
           className: "list-group w-100 pop  mt-1 position-absolute"
         }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("li", {
+          className: "list-group-item",
+          onClick: this.goToChat
+        }, "Chat"), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("li", {
           className: "list-group-item",
           onClick: this.logout
         }, "Logout"));
@@ -2083,21 +2582,26 @@ function (_Component) {
       var notifications = this.showNotifications();
       var menu = this.loadMenu();
       return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("nav", {
-        className: "navbar  navbar-light bg-light"
-      }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "navbar border-bottom navbar-light bg-light"
+      }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h4", {
+        onClick: this.goToChat,
+        className: "text-capitalize home-link"
+      }, this.props.auth.user.username), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
         className: "position-relative"
       }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("form", {
-        className: "form-inline w-100"
+        className: "form-inline mb-0 w-100"
       }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("input", {
         onChange: this.search(),
         className: "form-control",
         type: "search",
         placeholder: "Search",
-        "aria-label": "Search"
+        "aria-label": "Search",
+        value: this.state.searchText
       })), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("ul", {
-        className: "list-group w-100 pop  mt-1 position-absolute "
+        className: "list-group w-100 pop position-absolute "
       }, this.state.filteredMembers.map(function (member) {
         return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("li", {
+          key: member._id,
           onClick: _this6.goToProfile(member._id),
           className: "list-group-item"
         }, member.username);
@@ -2138,6 +2642,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _actions_searchActions__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../actions/searchActions */ "./frontend/actions/searchActions.js");
 /* harmony import */ var _actions_authActions__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../actions/authActions */ "./frontend/actions/authActions.js");
 /* harmony import */ var _actions_notificationsActions__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../actions/notificationsActions */ "./frontend/actions/notificationsActions.js");
+/* harmony import */ var _actions_chatActions__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../actions/chatActions */ "./frontend/actions/chatActions.js");
+
 
 
 
@@ -2182,6 +2688,9 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
     },
     clearOutSearch: function clearOutSearch() {
       return dispatch(_actions_searchActions__WEBPACK_IMPORTED_MODULE_2__["clearOut"]());
+    },
+    clearConvo: function clearConvo() {
+      return dispatch(_actions_chatActions__WEBPACK_IMPORTED_MODULE_5__["clearConvo"]());
     }
   };
 };
@@ -2251,7 +2760,7 @@ function (_Component) {
       this.props.getProfile(this.props.id).then(function () {
         _this2.setState({
           user: _this2.props.profile,
-          pending_friend: _this2.props.profile.pending_friend,
+          pending_friend: _this2.props.pending,
           pending_org: _this2.props.profile.pending_org
         });
       });
@@ -2265,7 +2774,7 @@ function (_Component) {
         this.props.getProfile(this.props.id).then(function () {
           _this3.setState({
             user: _this3.props.profile,
-            pending_friend: _this3.props.profile.pending_friend,
+            pending_friend: _this3.props.pending,
             pending_org: _this3.props.profile.pending_org
           });
         });
@@ -2274,7 +2783,7 @@ function (_Component) {
       if (nextProps.profile != this.state.user) {
         this.setState({
           user: nextProps.profile,
-          pending_friend: nextProps.profile.pending_friend,
+          pending_friend: this.props.pending,
           pending_org: nextProps.profile.pending_org
         });
       }
@@ -2293,19 +2802,27 @@ function (_Component) {
         if (this.props.areFriends) {
           removeFriend = react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
             onClick: function onClick() {
-              return _this4.props.removeFriend(_this4.state.user._id);
+              _this4.props.removeFriend(_this4.state.user._id).then(function () {
+                return _this4.props.socket.emit("remove friend", {
+                  id: _this4.props.id
+                });
+              });
             },
             className: "btn mt-5 mr-2 btn-primary"
           }, "Remove Friend");
         } else {
-          if (this.state.pending_friend) {
+          if (this.props.pending) {
             addFriend = react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
               className: "btn mt-5 mr-2 btn-secondary disabled"
             }, "Add Friend");
           } else {
             addFriend = react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("button", {
               onClick: function onClick() {
-                return _this4.props.sendFriendRequest(_this4.state.user._id);
+                _this4.props.sendFriendRequest(_this4.state.user._id).then(function () {
+                  _this4.props.socket.emit("send friend request", {
+                    id: _this4.props.id
+                  });
+                });
               },
               className: "btn mt-5 mr-2 btn-success"
             }, "Add Friend");
@@ -2377,10 +2894,15 @@ function (_Component) {
       return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
         className: "h-100"
       }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
-        className: "card card-block w-50  mt-5 h-50 mx-auto "
+        className: "card card-block w-50  mt-5 h-50 mx-auto",
+        style: {
+          minHeight: "400px"
+        }
       }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
         className: "card-body text-center"
-      }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", null, this.state.user.username), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h6", null, this.state.user.email), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h6", null, this.state.user.is_admin ? "administrator" : ""), addToOrganization, removeMember, addFriend, removeFriend)));
+      }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h2", {
+        className: "text-capitalize"
+      }, this.state.user.username), addToOrganization, removeMember, addFriend, removeFriend)));
     }
   }]);
 
@@ -2409,12 +2931,40 @@ __webpack_require__.r(__webpack_exports__);
 var mapStateToProps = function mapStateToProps(state, _ref) {
   var match = _ref.match;
   var id = match.params.id;
-  var areFriends = state.auth.user.friends.includes(id);
+  var areFriends = false;
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
+
+  try {
+    for (var _iterator = state.auth.user.friends[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var friend = _step.value;
+
+      if (id == friend._id) {
+        areFriends = true;
+      }
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator["return"] != null) {
+        _iterator["return"]();
+      }
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
+  }
+
   return {
     id: id,
     areFriends: areFriends,
     currentUser: state.auth,
-    profile: state.profile.user
+    profile: state.profile.user,
+    pending: state.profile.user.pending
   };
 };
 
@@ -2554,9 +3104,9 @@ var instialState = {
       break;
 
     case _actions_types__WEBPACK_IMPORTED_MODULE_0__["MAKE_CONVO_SUCCESS"]:
-      return {
+      return _objectSpread({}, state, {
         conversations: [].concat(_toConsumableArray(state.conversations), [action.payload])
-      };
+      });
 
     default:
       return state;
@@ -2591,7 +3141,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 
 var intialState = {
-  messages: []
+  messages: [],
+  currentConvo: null
 };
 /* harmony default export */ __webpack_exports__["default"] = (function () {
   var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : intialState;
@@ -2607,6 +3158,14 @@ var intialState = {
       return _objectSpread({}, state, {
         messages: [].concat(_toConsumableArray(state.messages), [action.payload])
       });
+
+    case _actions_types__WEBPACK_IMPORTED_MODULE_0__["SET_CURRENT_CONVO"]:
+      return _objectSpread({}, state, {
+        currentConvo: action.payload
+      });
+
+    case _actions_types__WEBPACK_IMPORTED_MODULE_0__["CLEAR_CONVO"]:
+      return intialState;
 
     default:
       return state;
@@ -2767,7 +3326,7 @@ var intialState = {
     case _actions_types__WEBPACK_IMPORTED_MODULE_0__["SENT_FRIEND_REQUEST_SUCCESS"]:
       return _objectSpread({}, state, {
         user: _objectSpread({}, state.user, {
-          pending_friend: true
+          pending: true
         })
       });
 
@@ -2783,9 +3342,10 @@ var intialState = {
     case _actions_types__WEBPACK_IMPORTED_MODULE_0__["REMOVE_FRIEND_SUCCESS"]:
       var obj1;
 
-      if (action.payload == state.user.id) {
+      if (action.payload == state.user._id) {
         obj1 = _objectSpread({}, state, {
           user: _objectSpread({}, state.user, {
+            pending: false,
             are_friends: false
           })
         });
@@ -3019,12 +3579,13 @@ function () {
 /*!****************************************!*\
   !*** ./frontend/utilities/authUtil.js ***!
   \****************************************/
-/*! exports provided: login, signup, logout, changeCurrentOrg, addOrg */
+/*! exports provided: login, getMe, signup, logout, changeCurrentOrg, addOrg */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "login", function() { return login; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getMe", function() { return getMe; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "signup", function() { return signup; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "logout", function() { return logout; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "changeCurrentOrg", function() { return changeCurrentOrg; });
@@ -3040,6 +3601,9 @@ var login = function login(username, password) {
     username: username,
     password: password
   });
+};
+var getMe = function getMe() {
+  return axios__WEBPACK_IMPORTED_MODULE_0___default.a.get("".concat(_config__WEBPACK_IMPORTED_MODULE_1__["API_URL"], "/api/users/me?access_token=").concat(localStorage.getItem('token')));
 };
 var signup = function signup(username, password) {
   return axios__WEBPACK_IMPORTED_MODULE_0___default.a.post("".concat(_config__WEBPACK_IMPORTED_MODULE_1__["API_URL"], "/api/users/"), {
@@ -3077,13 +3641,14 @@ var addOrg = function addOrg(data) {
 /*!****************************************!*\
   !*** ./frontend/utilities/chatUtil.js ***!
   \****************************************/
-/*! exports provided: getAllConvoMessages, makeAConversation, sendMessage */
+/*! exports provided: getAllConvoMessages, makeAConversation, deleteConversation, sendMessage */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getAllConvoMessages", function() { return getAllConvoMessages; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "makeAConversation", function() { return makeAConversation; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "deleteConversation", function() { return deleteConversation; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "sendMessage", function() { return sendMessage; });
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
@@ -3097,6 +3662,9 @@ var makeAConversation = function makeAConversation(id) {
   return axios__WEBPACK_IMPORTED_MODULE_0___default.a.post("".concat(_config__WEBPACK_IMPORTED_MODULE_1__["API_URL"], "/api/conversations/?access_token=").concat(localStorage.getItem('token')), {
     target: id
   });
+};
+var deleteConversation = function deleteConversation(id) {
+  return axios__WEBPACK_IMPORTED_MODULE_0___default.a["delete"]("".concat(_config__WEBPACK_IMPORTED_MODULE_1__["API_URL"], "/api/conversations/").concat(id, "?access_token=").concat(localStorage.getItem('token')));
 };
 var sendMessage = function sendMessage(_ref) {
   var receiver = _ref.receiver,
@@ -3253,7 +3821,7 @@ function privateRoutes(_ref) {
 
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_1__["Route"], _extends({}, rest, {
     render: function render(props) {
-      return isAuthenticated ? react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(Component, props) : react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_1__["Redirect"], {
+      return isAuthenticated ? react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(Component, _extends({}, rest, props)) : react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_1__["Redirect"], {
         to: {
           pathname: "/",
           state: {
@@ -33150,7 +33718,7 @@ exports = module.exports = __webpack_require__(/*! ../../node_modules/css-loader
 var getUrl = __webpack_require__(/*! ../../node_modules/css-loader/dist/runtime/getUrl.js */ "./node_modules/css-loader/dist/runtime/getUrl.js");
 var ___CSS_LOADER_URL___0___ = getUrl(__webpack_require__(/*! ../images/new_cover.png */ "./frontend/images/new_cover.png"));
 // Module
-exports.push([module.i, ".App {\n  text-align: center;\n}\n\n.App-main-div {\n  \n}\n\n.normal {\n  background-color: #c2dde6 !important;\n}\n\n.done {\n  background-color: lightgreen !important;\n}\n\n.App-logo {\n  animation: App-logo-spin infinite 20s linear;\n  height: 40vmin;\n  pointer-events: none;\n}\n.max-height{\n  height: 100% !important;\n\n}\n#root {\n  height: 100%;\n}\n\nhtml {\n  height: 100%;\n  min-width: 975px;\n}\n\n.App-header {\n  background-color: #282c34;\n  min-height: 100vh;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  justify-content: center;\n  font-size: calc(10px + 2vmin);\n  color: white;\n}\n\n.App-link {\n  color: #61dafb;\n}\n.react-modal {\n  width: 100%;\n  height: 100%;\n  background-color: rgba(0, 0, 0, 0.4);\n  z-index: 708;\n  position: fixed;\n  top: 0;\n  bottom: 0;\n  left: 0;\n  right: 0;\n}\n.inner-modal {\n  position: fixed;\n  margin: auto;\n  top: 0;\n  left: 0;\n  bottom: 0;\n  right: 0;\n  width: 700px;\n  height: 600px;\n  z-index: 709;\n  background-color: white;\n  border-radius: 4px;\n  overflow: auto;\n  padding: 20px;\n}\n.close {\n  position: fixed;\n  top: 10px;\n  right: 30px;\n  font-size: 58px !important;\n  font-weight: bold !important ;\n  color: white !important;\n}\n.close:hover,\n.close:focus {\n  color: #000;\n  text-decoration: none;\n  cursor: pointer;\n}\n\n.list-pop {\n  position: absolute !important;\n  margin-top: 70px !important;\n  z-index: 700 !important;\n  width: 10%;\n}\n\n.pop {\n  z-index: 700;\n}\n.pop:hover {\n  cursor: pointer;\n}\n\n.home-screen {\n  height: 100%;\n  background: url(" + ___CSS_LOADER_URL___0___ + ") no-repeat center center fixed;\n  -webkit-background-size: cover;\n  -moz-background-size: cover;\n  -o-background-size: cover;\n  background-size: cover;\n}\n.random-class{\n  float: right;\n}\n\n.sender{\n  float: left;\n  color: white;\n  background-color: aquamarine;\n  clear: both;\n}\n\n.receiver{\n  float: right;\n  color: white;\n  background-color: gray;\n  clear: both;\n}\n\n.max-video{\n  height: 300px !important;\n}\n\n@keyframes App-logo-spin {\n  from {\n    transform: rotate(0deg);\n  }\n  to {\n    transform: rotate(360deg);\n  }\n}\n", ""]);
+exports.push([module.i, ".App {\n  text-align: center;\n}\n.normal {\n  background-color: #c2dde6 !important;\n}\n\n.done {\n  background-color: lightgreen !important;\n}\n\n.App-logo {\n  animation: App-logo-spin infinite 20s linear;\n  height: 40vmin;\n  pointer-events: none;\n}\n.max-height{\n  height: 100% !important;\n\n}\n#root {\n  height: 100%;\n}\n\nhtml {\n  height: 100%;\n  min-width: 975px;\n}\n\n.App-header {\n  background-color: #282c34;\n  min-height: 100vh;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  justify-content: center;\n  font-size: calc(10px + 2vmin);\n  color: white;\n}\n\n.App-link {\n  color: #61dafb;\n}\n.react-modal {\n  width: 100%;\n  height: 100%;\n  background-color: rgba(0, 0, 0, 0.4);\n  z-index: 708;\n  position: fixed;\n  top: 0;\n  bottom: 0;\n  left: 0;\n  right: 0;\n}\n.inner-modal {\n  position: fixed;\n  margin: auto;\n  top: 0;\n  left: 0;\n  bottom: 0;\n  right: 0;\n  width: 700px;\n  height: 600px;\n  z-index: 709;\n  background-color: white;\n  border-radius: 4px;\n  overflow: auto;\n  padding: 20px;\n}\n/* .close {\n  position: fixed;\n  top: 10px;\n  right: 30px;\n  font-size: 58px !important;\n  font-weight: bold !important ;\n  color: white !important;\n}\n.close:hover,\n.close:focus {\n  color: #000;\n  text-decoration: none;\n  cursor: pointer;\n} */\n\n\n\n.list-pop {\n  position: absolute !important;\n  margin-top: 70px !important;\n  z-index: 700 !important;\n  width: 10%;\n}\n\n.pop {\n  z-index: 700;\n}\n.pop:hover {\n  cursor: pointer;\n}\n\n.home-screen {\n  height: 100%;\n  background: url(" + ___CSS_LOADER_URL___0___ + ") no-repeat center center fixed;\n  -webkit-background-size: cover;\n  -moz-background-size: cover;\n  -o-background-size: cover;\n  background-size: cover;\n}\n.random-class{\n  float: right;\n}\n\n.sender{\n  /* float: left; */\n  color: white;\n  background-color: #77dd77 ;\n  clear: both;\n  word-wrap: break-word;\n}\n\n.receiver{\n  float: right;\n  color: white;\n  background-color: gray;\n  clear: both;\n  word-wrap: break-word;\n}\n\n.w-15{\n  width: 15%;\n  word-wrap: break-word !important ;\n}\n.max-video{\n  height: 300px !important;\n}\n\n.bottom-input{\n  position: absolute;\n  bottom: 0;\n}\n\n.call-btn{\n  position: absolute;\n  top: 20px;\n  right: 20px;\n}\n\n.clickable:hover{\n  cursor: pointer;\n}\n\nul{\n  list-style: none;\n  padding: 0;\n}\n\nli{\n  padding: 5px;\n}\n\n.messaging-header{\n  left: 40%;\n  top: 10px;\n}\n\n.video-container{\n  background-color: #000;\n  position: absolute;\n  height: 60%;\n  width: 60%;\n  top: 10%;\n  right: 20%;\n  border-radius: 6px;\n  border: 4px solid #65CCA9;\n  min-width: 500px;\n  min-height: 500px;\n  z-index: 200;\n}\n\n.outer-video{\n  height: 100%;\n  width: 100%;\n \n}\n\n.inner-video{\n  position: absolute;\n  bottom: 5px;\n  left: 5px;\n  width: 30%;\n  height: 30%;\n  border-radius: 4px;\n  border: 4px solid #65CCA9;\n}\n\n.video-close-btn{\n  position: absolute;\n  top: 5px;\n  right: 5px;\n  z-index: 100;\n}\n\n.ringer{\n  position: absolute;\n  top: 20%;\n  left: 40%;\n  width: 20%;\n  height: 20%;\n  padding: 30px;\n  z-index: 100;\n  min-height: 300px;\n  min-width: 300px;\n  background-color: aliceblue;\n}\n\n.ringer > div{\n  position: absolute;\n  bottom: 10%;\n  left: 30%;\n}\n\n.splash-screen{\n  height: 70%;\n  width: 100%;\n}\n.notifications{\n  font-size: 11px\n}\n.notifications > span:hover{\n  cursor: pointer;\n  text-decoration: underline;\n}\n\n.home-link:hover{\n  cursor: pointer;\n}\n\n@keyframes App-logo-spin {\n  from {\n    transform: rotate(0deg);\n  }\n  to {\n    transform: rotate(360deg);\n  }\n}\n", ""]);
 
 
 /***/ }),

@@ -9,15 +9,17 @@ app.use(express.static(path.join(__dirname, "..", "frontend")));
 app.use("/api/", api);
 app.use("/auth/", auth);
 app.use(function(err, req, res, next) {
+  
   if (err.name === "UnauthorizedError") {
-    res.status(401).send("Invalid token");
-    return;
+    
+    return res.status(401).send("Invalid token");
   }
   if (err.code === 11000) {
-    res.status(400).send("Username already exists!");
+    
+    return res.status(200).send("Username already exists!");
   }
 
-  res.status(500).send("Oops");
+  return res.status(200).send("Oops");
 });
 
 module.exports = app;

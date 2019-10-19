@@ -1,7 +1,8 @@
-import {GET_ALL_MESSAGES_SUCCESS,SEND_MESSAGE_SUCCESS} from '../actions/types'
+import {GET_ALL_MESSAGES_SUCCESS,SEND_MESSAGE_SUCCESS, SET_CURRENT_CONVO, CLEAR_CONVO} from '../actions/types'
 
 const intialState = {
-    messages: []
+    messages: [],
+    currentConvo: null
 }
 
 export default function(state = intialState, action){
@@ -16,6 +17,13 @@ export default function(state = intialState, action){
                 ...state,
                 messages: [...state.messages, action.payload]
             }
+        case SET_CURRENT_CONVO:
+                return {
+                    ...state,
+                    currentConvo: action.payload
+                }
+        case CLEAR_CONVO:
+            return intialState
         default:
             return state
     }

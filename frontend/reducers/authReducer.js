@@ -85,6 +85,7 @@ import {
         break;
       case MAKE_CONVO_SUCCESS:
         return{
+          ...state,
           conversations: [...state.conversations,action.payload]
         }
       default:

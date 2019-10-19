@@ -21,11 +21,25 @@ const InviteSchema = Schema({
 
 InviteSchema.pre('save',function(next){
     if (JSON.stringify(this.inviter._id) === JSON.stringify(this.target._id)){
-        next(new Error("you cant invite yourself"))
+        return next(new Error("you cant invite yourself"))
     }
    next()
 })
 
+InviteSchema.pre("save",function(next){
+    let query = {$or:[{inviter: this.inviter, target: this.target}, {inviter: this.target, target: this.inviter}]}
+    mongoose.model('invite', InviteSchema).find(query)
+        .then((invites)=>{
+            if(invites.length > 0){
+                next(new Error("not unique invite"))
+                return
+            }
+            next()
+        })
+        .catch((err)=>{return next(err)})
+
+
+})
 InviteSchema.post('save', function(doc){
     
     if (this.accepted){
@@ -38,7 +52,6 @@ InviteSchema.post('save', function(doc){
                 invite.inviter.friends.addToSet(invite.target._id)
                 invite.inviter.save(function(err,dix){
                     if (err){console.log(err)}
-                    console.log(dix)
                 })
 
             }
@@ -51,7 +64,7 @@ InviteSchema.post('save', function(doc){
                 invite.target.friends.addToSet(invite.inviter._id)
                 invite.target.save(function(err,dix){
                     if (err){console.log(err)}
-                    console.log(dix)
+                    
                 })
                     
 

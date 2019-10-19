@@ -21,8 +21,8 @@ export default class LoginSignup extends Component {
 
     handleSubmit = (e) => {
         e.preventDefault()
-        const user = Object.assign({},this.state)
-       
+        const user = Object.assign({},this.state, {username: this.state.username.trim()})
+        
         this.props.process(user)
     } 
 
@@ -45,11 +45,13 @@ export default class LoginSignup extends Component {
             emailTop = ''
             bottomLink = <span>Dont have an account? <Link to='/signup'>Sign Up</Link></span>
         }
-        return {emailTop, bottomLink}
+
+        let homeLink = <Link to="/">Home</Link>
+        return {emailTop, bottomLink, homeLink}
     }
 
     render() {
-        const {emailTop , bottomLink} = this.getLinks()
+        const {emailTop , bottomLink, homeLink} = this.getLinks()
         return (
             <div className="h-100">
                 <div className="row align-items-center h-100 justify-content-center">
@@ -65,7 +67,7 @@ export default class LoginSignup extends Component {
                             <input  className="form-control" onChange={this.update("password")}type="password" name="" id="" placeholder="password"/>
                         </div>
                         <input  className="btn btn-primary mb-2" type="submit" />
-                        {bottomLink}
+                        {bottomLink}{homeLink}
                     </form>
                 </div>
             </div>

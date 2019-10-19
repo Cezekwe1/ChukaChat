@@ -14,4 +14,6 @@ router.route('/:id')
     .put(controller.put)
     .delete(controller.delete)
     
+router.use(controller.error)
+    
 module.exports = router

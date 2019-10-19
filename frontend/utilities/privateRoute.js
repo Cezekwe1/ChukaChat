@@ -15,7 +15,7 @@ export default function privateRoutes({ component: Component, isAuthenticated: i
       {...rest}
       render={props =>
         isAuthenticated ? (
-          <Component {...props} />
+          <Component {...rest} {...props} />
         ) : (
           <Redirect
             to={{

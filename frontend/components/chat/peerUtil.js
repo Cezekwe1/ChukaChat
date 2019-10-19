@@ -1,5 +1,5 @@
 import Peer from 'simple-peer'
-export const createPeer = (userId, initiator, myStream, video,setPeer,myId,socket) => {
+export const createPeer = (userId, initiator, myStream, video,setPeer,myId,socket,username="friend") => {
   const peer = new Peer({
     initiator,
     stream: myStream,
@@ -7,23 +7,23 @@ export const createPeer = (userId, initiator, myStream, video,setPeer,myId,socke
   });
 
   peer.on("signal", data => {
-    socket.emit("signal", { userId: myId, info: data, id: userId});
+    
+
+    socket.emit("signal", { userId: myId, info: data, id: userId, username});
   });
 
   peer.on("stream", stream => {
+
     video.srcObject = stream;
     video.play();
   });
 
   peer.on("close", () => {
-  
+    
     if (peer){
         peer.destroy()
     }
-
-    if (initiator){
-      socket.emit('leave video channel',{id: userId})
-    }
+    socket.emit('leave video channel',{id: userId})
     setPeer(userId,undefined)
   });
   return peer;

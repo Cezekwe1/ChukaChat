@@ -7,10 +7,9 @@ var mongoose = require('mongoose')
 var io = require('socket.io')(server,{pingInterval: 4000})
 var socketEvents = require('./server/socketEvents')
 
-
 mongoose.connect(config.db.url, {useNewUrlParser: true, useUnifiedTopology: true,useCreateIndex:true})
 if (config.seed){
-    require('./server/util/seed')
+    // require('./server/util/seed')
 }
 
 

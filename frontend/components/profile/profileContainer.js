@@ -4,12 +4,19 @@ import * as ProfileActions from "../../actions/profileActions";
 
 const mapStateToProps = (state,{match}) => {
   let id = match.params.id;
-  let areFriends =  state.auth.user.friends.includes(id)
+  let areFriends = false
+  for (let friend of  state.auth.user.friends){
+    if (id == friend._id){
+      areFriends = true
+    }
+  }
+  
   return {
     id,
     areFriends,
     currentUser: state.auth,
-    profile: state.profile.user
+    profile: state.profile.user,
+    pending: state.profile.user.pending
   };
 };
 const mapDispatchToProps = dispatch => ({
