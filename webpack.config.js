@@ -1,11 +1,21 @@
 var path = require("path");
 var webpack = require('webpack')
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
+
 module.exports = {
   context: __dirname,
   entry: "./frontend/chukachat.jsx",
   output: {
     path: path.join(__dirname, "frontend", "dist"),
     filename: "bundle.js"
+  },
+
+  optimization: {
+    minimize: true,
+    minimizer: [new TerserPlugin({
+      test: [/\.js?$/,/\.jsx?$/]
+    })],
   },
   module: {
     rules: [

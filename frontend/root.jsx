@@ -2,7 +2,7 @@ import {Provider} from 'react-redux';
 import {HashRouter} from 'react-router-dom'
 import React from 'react'
 import AppContainer from './components/app/AppContainer';
-import "bootstrap/dist/css/bootstrap.css";
+import "bootstrap/dist/css/bootstrap.min.css";
 import "./styles/App.css"
 
 

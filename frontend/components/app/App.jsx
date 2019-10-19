@@ -10,7 +10,7 @@ import Nav from "../nav/navBarContainer";
 import io from "socket.io-client";
 import * as PeerUtil from "../chat/peerUtil";
 import Video from "../chat/videoChat";
-import Ringer from "./ringer"
+import Ringer from "./ringer";
 var socket = io();
 
 export class App extends Component {
@@ -58,7 +58,9 @@ export class App extends Component {
   getRinger = () => {
     var ringer;
     if (this.state.openRinger) {
-      ringer = <Ringer answerCall={this.answerCall} caller={this.state.caller} />
+      ringer = (
+        <Ringer answerCall={this.answerCall} caller={this.state.caller} />
+      );
     } else {
       ringer = "";
     }
@@ -66,10 +68,15 @@ export class App extends Component {
   };
 
   setUpSocket = () => {
-    socket.on("accept friend request", data =>{ this.props.getMe()})
-    socket.on("remove friend", data =>{ 
-      
-      this.props.getMe()})
+    socket.on("accept friend request", data => {
+      this.props.getMe();
+    });
+    socket.on("remove friend", data => {
+      this.props.getMe();
+    });
+    socket.on("made conversation",data =>{
+      this.props.getMe();
+    })
     socket.on("signal", data => {
       let peer = this.peers[data.userId];
       if (peer) {
@@ -84,7 +91,7 @@ export class App extends Component {
       this.setState({
         onCall: true
       });
-      
+
       if (peer === undefined) {
         this.setRinger(data.username, true)
           .then(promise => {
@@ -141,7 +148,6 @@ export class App extends Component {
 
       let interval = setInterval(() => {
         if (this.state.answered) {
-          
           resolve({ interval, timer });
         } else if (this.state.answered === false) {
           reject({ timer, interval });
@@ -156,7 +162,6 @@ export class App extends Component {
   getVideo = () => {
     var video;
     if (this.state.calling) {
-      
       video = (
         <Video
           socket={socket}
@@ -201,13 +206,13 @@ export class App extends Component {
   joinVideoChannel = () => {
     if (this.props.isAuthenticated) {
       socket.emit("join video channel", { id: this.props.me._id });
-      socket.emit("join notification channel",{ id: this.props.me._id })
+      socket.emit("join notification channel", { id: this.props.me._id });
     }
   };
 
-  getOnCall=()=>{
-    return this.state.onCall
-  }
+  getOnCall = () => {
+    return this.state.onCall;
+  };
 
   render() {
     var nav = this.showNavBar();

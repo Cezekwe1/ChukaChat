@@ -43,7 +43,9 @@ exports.put = function(req,res,next){
     var oldInvite = req.invite
     _.merge(oldInvite,req.body)
     oldInvite.save(function(err,updatedInvite){
-                if(err){next(err)}
+                if(err){
+                    console.log(err)
+                    return next(err)}
                 res.json(updatedInvite)
             })
 } 

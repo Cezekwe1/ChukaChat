@@ -26,7 +26,7 @@ export class Chat extends Component {
     this.stream = null;
 
     this.process();
-    
+
     this.props.socket.on("receive message", data => {
       if (this.state.currentConvo) {
         props.addMessage(data.message);
@@ -50,7 +50,6 @@ export class Chat extends Component {
     this.props.getMe();
   }
   componentDidMount() {
-    
     if (this.state.currentConvo) {
       this.setConvo(this.state.currentConvo)();
     }
@@ -89,7 +88,6 @@ export class Chat extends Component {
     });
   };
   setLastConvo = () => {
-    
     this.setConvo(
       this.props.conversations[this.props.conversations.length - 1]
     )();
@@ -164,7 +162,6 @@ export class Chat extends Component {
   };
 
   setConvo = convo => {
-    
     var other =
       convo.target != this.props.me._id ? convo.target : convo.starter;
     var obj = {
@@ -284,28 +281,43 @@ export class Chat extends Component {
     }
   };
 
+  onListItemEnter = (e) =>{
+    if(e.target.children && e.target.children[0]){
+      e.target.children[0].classList.remove("d-none")
+    }
+  }
+
+  onListItemLeave = (e) =>{
+    if(e.target.children && e.target.children[0]){
+      e.target.children[0].classList.add("d-none")
+    }
+  }
+  
+
   deleteFriend = person => {
     return e => {
       e.stopPropagation();
-      this.props.deleteFriend(person._id);
+      this.props.deleteFriend(person._id).then(() => {
+        this.props.socket.emit("remove friend", { id: person._id });
+      });
     };
   };
 
-  deleteConversation = convo =>{
+  deleteConversation = convo => {
     return e => {
-      e.stopPropagation()
-      if (this.state.currentConvo._id == convo._id){
+      e.stopPropagation();
+      if (this.state.currentConvo._id == convo._id) {
         this.setState({
           currentConvo: null
-        })
+        });
         this.props.socket.emit("leave conversation", {
           conversation: this.state.currentConvo._id
         });
-        this.props.setCurrentConvo(null)
+        this.props.setCurrentConvo(null);
       }
-      this.props.deleteConversation(convo._id)
-    }
-  }
+      this.props.deleteConversation(convo._id);
+    };
+  };
   render() {
     let video = this.getVideo();
     let callBtn = this.getCallBtn();
@@ -319,6 +331,8 @@ export class Chat extends Component {
             {this.props.conversations.map(convo => {
               return (
                 <li
+                  onMouseEnter={this.onListItemEnter}
+                  onMouseLeave={this.onListItemLeave}
                   className={
                     this.state.notifications[convo._id]
                       ? "clickable text-primary"
@@ -333,7 +347,7 @@ export class Chat extends Component {
 
                   <span
                     onClick={this.deleteConversation(convo)}
-                    className="close icon mr-2"
+                    className="close text-danger d-none icon mr-2"
                   >
                     &times;
                   </span>
@@ -348,13 +362,15 @@ export class Chat extends Component {
                 return this.convoFilter(friend);
               })
               .map(person => {
-                
                 return (
                   <li
+                    onMouseEnter={this.onListItemEnter}
+                    onMouseLeave={this.onListItemLeave}
                     className="clickable"
                     onClick={() =>
                       this.props.makeConvo(person._id).then(() => {
                         this.setLastConvo();
+                        this.props.socket.emit("made conversation",{id: person._id})
                       })
                     }
                     key={person._id}
@@ -362,7 +378,7 @@ export class Chat extends Component {
                     {person.username}
                     <span
                       onClick={this.deleteFriend(person)}
-                      className="close icon mr-2"
+                      className="close text-danger d-none icon mr-2"
                     >
                       &times;
                     </span>

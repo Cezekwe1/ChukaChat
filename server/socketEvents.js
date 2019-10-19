@@ -17,7 +17,6 @@ module.exports = function(io){
         })
 
         socket.on('accept friend request', function(data){
-            
             socket.join(`${data.id} channel`)
             socket.broadcast.to(`${data.id} channel`).emit("accept friend request",{})
             socket.leave(`${data.id} channel`)
@@ -26,6 +25,12 @@ module.exports = function(io){
         socket.on("remove friend", function(data){
             socket.join(`${data.id} channel`)
             socket.broadcast.to(`${data.id} channel`).emit("remove friend",{})
+            socket.leave(`${data.id} channel`)
+        })
+
+        socket.on("made conversation", function(data){
+            socket.join(`${data.id} channel`)
+            socket.broadcast.to(`${data.id} channel`).emit("made conversation",{})
             socket.leave(`${data.id} channel`)
         })
 

@@ -9,8 +9,8 @@ import {
   ADD_ORG_SUCCESS
 } from "./types";
 import * as AuthUtil from "../utilities/authUtil";
-import * as ChatActions from "./chatActions"
-import * as SearchActions from "./searchActions"
+import * as ChatActions from "./chatActions";
+import * as SearchActions from "./searchActions";
 
 const loginSuccess = data => ({
   type: LOGIN_SUCCESS,
@@ -77,13 +77,12 @@ export const login = ({ username, password }) => dispatch => {
 };
 
 export const logout = () => dispatch => {
-  
   localStorage.removeItem("token");
   localStorage.removeItem("user");
   localStorage.removeItem("friends");
   localStorage.removeItem("conversations");
-  dispatch(ChatActions.clearConvo())
-  dispatch(SearchActions.clearOut())
+  dispatch(ChatActions.clearConvo());
+  dispatch(SearchActions.clearOut());
   dispatch(logoutSuccess());
 };
 
@@ -160,26 +159,27 @@ export const addOrg = org => dispatch => {
 };
 
 export const getMe = () => dispatch => {
-  return AuthUtil.getMe().then(res => {
-    const token = localStorage.getItem('token');
-    const friends = res.data.friends;
-    const user = res.data;
-    const conversations = res.data.conversations;
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(user));
-    localStorage.setItem("friends", JSON.stringify(friends));
-    localStorage.setItem("conversations", JSON.stringify(conversations));
+  return AuthUtil.getMe()
+    .then(res => {
+      const token = localStorage.getItem("token");
+      const friends = res.data.friends;
+      const user = res.data;
+      const conversations = res.data.conversations;
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("friends", JSON.stringify(friends));
+      localStorage.setItem("conversations", JSON.stringify(conversations));
 
-    
-    dispatch(
-      loginSuccess({
-        token,
-        friends,
-        user,
-        conversations
-      })
-    );
-  }).catch(err => {
-    
-    dispatch(logout)});
+      dispatch(
+        loginSuccess({
+          token,
+          friends,
+          user,
+          conversations
+        })
+      );
+    })
+    .catch(err => {
+      dispatch(logout);
+    });
 };

@@ -30,10 +30,12 @@ InviteSchema.pre("save",function(next){
     let query = {$or:[{inviter: this.inviter, target: this.target}, {inviter: this.target, target: this.inviter}]}
     mongoose.model('invite', InviteSchema).find(query)
         .then((invites)=>{
-            if(invites.length > 0){
-                next(new Error("not unique invite"))
-                return
-            }
+            invites.forEach((invite)=>{
+                if(invite._id.toString() != this._id.toString()){
+                    
+                    return next(new Error("not unique invite"))
+                }
+            })
             next()
         })
         .catch((err)=>{return next(err)})
