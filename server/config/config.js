@@ -22,5 +22,4 @@ try{
 }catch{
     envconfig = {}
 }
-
 module.exports = _.merge(config,envconfig)
