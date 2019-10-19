@@ -88,7 +88,7 @@ export class VideoChat extends Component {
     return (
       <div className="video-container">
         <button className="video-close-btn btn btn-outline-danger" onClick={this.close}>Hang Up</button>
-        <video className="inner-video" ref="video"></video>
+        <video muted="muted" className="inner-video" ref="video"></video>
         <video className="outer-video" ref="video2"></video>
       </div>
     );
