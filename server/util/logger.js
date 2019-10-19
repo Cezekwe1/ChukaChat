@@ -3,6 +3,7 @@ var _ = require("lodash");
 var noop = function() {};
 var consoleLog = config.logging ? console.log.bind(console) : noop;
 
+
 var logger = {
   log: function() {
     var args = _.toArray(arguments).map(function(arg) {
