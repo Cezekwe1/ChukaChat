@@ -44,7 +44,6 @@ export default class LoginSignup extends Component {
             emailTop = ''
             bottomLink = <span>Dont have an account? <Link to='/signup'>Sign Up</Link></span>
         }
-
         let homeLink = <Link to="/">Home</Link>
         return {emailTop, bottomLink, homeLink}
     }
