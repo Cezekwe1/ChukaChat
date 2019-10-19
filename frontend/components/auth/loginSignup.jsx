@@ -21,8 +21,7 @@ export default class LoginSignup extends Component {
 
     handleSubmit = (e) => {
         e.preventDefault()
-        const user = Object.assign({},this.state, {username: this.state.username.trim()})
-        
+        const user = Object.assign({},this.state, {username: this.state.username.trim().toLowerCase()})
         this.props.process(user)
     } 
 
