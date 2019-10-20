@@ -11,12 +11,6 @@ module.exports = {
     filename: "bundle.js"
   },
 
-  optimization: {
-    minimize: true,
-    minimizer: [new TerserPlugin({
-      test: [/\.js?$/,/\.jsx?$/]
-    })],
-  },
   module: {
     rules: [
       {
@@ -50,5 +44,8 @@ module.exports = {
   devtool: "source-maps",
   resolve: {
     extensions: [".js", ".jsx", "*"]
-  }
+  },
+
+  mode: 'development'
+
 };

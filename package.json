@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon",
-    "build": "webpack"
+    "build": "webpack --config webpack.prod.config.js"
   },
   "author": "",
   "license": "ISC",

@@ -46,18 +46,16 @@ module.exports = function(io){
         })
         socket.on('signal',function(data){
             let room = `conversation-${data.id}`
-            let current = io.sockets.adapter.rooms[room]
             
             socket.join(room)
             socket.broadcast.to(room).emit('signal',data)
+            socket.leave(room)
         })
 
         socket.on('join video channel',function(data){
             let room = `conversation-${data.id}`
             let current = io.sockets.adapter.rooms[room]
             socket.join(`conversation-${data.id}`)
-            
-            
         })
         socket.on('leave video channel',function(data){
             socket.leave(`conversation-${data.id}`)

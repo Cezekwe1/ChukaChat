@@ -23,10 +23,10 @@ export const createPeer = (userId, initiator, myStream, video,setPeer,myId,socke
     if (peer){
         peer.destroy()
     }
-    socket.emit('leave video channel',{id: userId})
+    // socket.emit('leave video channel',{id: userId})
     setPeer(userId,undefined)
   });
   return peer;
 };
 
-export const getUserMedia = () => navigator.mediaDevices.getUserMedia({video: true, audio: true})
+export const getUserMedia = () => navigator.mediaDevices.getUserMedia({video: true, audio: false})
