@@ -5,6 +5,6 @@ ChukaChat is a full-stack video-chat real-time chat. ChukaChat built with Expres
 
 
 ### Requirements
-works best with Google Chrome browser. Only for laptops and desktops.
+works best with Google Chrome browser. Only for laptops and desktops. Sign In Guest 1 and call a friend to sign in as guest 2 and try video chat.
 
 ![image of splash](/splash/preview.png)
