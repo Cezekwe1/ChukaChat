@@ -29,4 +29,4 @@ export const createPeer = (userId, initiator, myStream, video,setPeer,myId,socke
   return peer;
 };
 
-export const getUserMedia = () => navigator.mediaDevices.getUserMedia({video: true, audio: false})
+export const getUserMedia = () => navigator.mediaDevices.getUserMedia({video: true, audio: true})

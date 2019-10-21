@@ -207,6 +207,8 @@ export class App extends Component {
     if (this.props.isAuthenticated) {
       socket.emit("join video channel", { id: this.props.me._id });
       socket.emit("join notification channel", { id: this.props.me._id });
+    }else{
+      socket.emit("leave all channels")
     }
   };
 

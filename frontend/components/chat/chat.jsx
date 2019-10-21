@@ -306,16 +306,19 @@ export class Chat extends Component {
   deleteConversation = convo => {
     return e => {
       e.stopPropagation();
-      if (this.state.currentConvo._id == convo._id) {
+      if (this.state.currentConvo && this.state.currentConvo._id == convo._id) {
         this.setState({
           currentConvo: null
         });
         this.props.socket.emit("leave conversation", {
           conversation: this.state.currentConvo._id
         });
-        this.props.setCurrentConvo(null);
+        this.props.setCurrentConvo(null)
+        this.props.socket.emit("remove friend", { id: convo.other });
       }
       this.props.deleteConversation(convo._id);
+      let other = (convo.target == this.props.me._id) ? convo.starter : convo.target
+      this.props.socket.emit("remove friend", { id: other });
     };
   };
   render() {

@@ -1085,6 +1085,8 @@ function (_Component) {
         socket.emit("join notification channel", {
           id: _this.props.me._id
         });
+      } else {
+        socket.emit("leave all channels");
       }
     });
 
@@ -1793,7 +1795,7 @@ function (_Component) {
       return function (e) {
         e.stopPropagation();
 
-        if (_this.state.currentConvo._id == convo._id) {
+        if (_this.state.currentConvo && _this.state.currentConvo._id == convo._id) {
           _this.setState({
             currentConvo: null
           });
@@ -1803,9 +1805,19 @@ function (_Component) {
           });
 
           _this.props.setCurrentConvo(null);
+
+          _this.props.socket.emit("remove friend", {
+            id: convo.other
+          });
         }
 
         _this.props.deleteConversation(convo._id);
+
+        var other = convo.target == _this.props.me._id ? convo.starter : convo.target;
+
+        _this.props.socket.emit("remove friend", {
+          id: other
+        });
       };
     });
 
@@ -2056,7 +2068,7 @@ var createPeer = function createPeer(userId, initiator, myStream, video, setPeer
 var getUserMedia = function getUserMedia() {
   return navigator.mediaDevices.getUserMedia({
     video: true,
-    audio: false
+    audio: true
   });
 };
 
@@ -2157,15 +2169,17 @@ function (_Component) {
         _this.props.setPeer(_this.props.otherVidId, undefined); // this.props.socket.emit('reject call',{id: this.props.id})
 
 
-        _this.props.stream.getTracks()[0].stop(); // this.props.stream.getTracks()[1].stop();
+        _this.props.stream.getTracks()[0].stop();
 
+        _this.props.stream.getTracks()[1].stop();
       } else {
         if (_this.myPeer) {
           _this.myPeer.destroy();
         }
 
-        _this.stream.getTracks()[0].stop(); // this.stream.getTracks()[1].stop();
+        _this.stream.getTracks()[0].stop();
 
+        _this.stream.getTracks()[1].stop();
 
         _this.props.setPeer(_this.props.otherId, undefined); // this.props.socket.emit('reject call',{myId: true,  id: this.props.otherId})
 
@@ -3189,7 +3203,8 @@ var intialState = {
 
     case _actions_types__WEBPACK_IMPORTED_MODULE_0__["SET_CURRENT_CONVO"]:
       return _objectSpread({}, state, {
-        currentConvo: action.payload
+        currentConvo: action.payload,
+        messages: action.payload == null ? [] : state.messages
       });
 
     case _actions_types__WEBPACK_IMPORTED_MODULE_0__["CLEAR_CONVO"]:

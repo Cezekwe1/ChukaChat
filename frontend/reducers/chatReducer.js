@@ -20,7 +20,8 @@ export default function(state = intialState, action){
         case SET_CURRENT_CONVO:
                 return {
                     ...state,
-                    currentConvo: action.payload
+                    currentConvo: action.payload,
+                    messages: (action.payload == null) ? [] : state.messages
                 }
         case CLEAR_CONVO:
             return intialState
